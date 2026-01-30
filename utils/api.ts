@@ -5,15 +5,30 @@
  * for making requests to the Cloudflare Worker API.
  */
 
-// Get the API base URL from environment variables
-// Falls back to localhost for development if not set
+// Get the API base URL based on environment
+// In production (cema.piwisuite.cl), use relative URLs since API is on same domain
+// In development, use localhost:8787 for local Wrangler dev server
 const getApiBaseUrl = (): string => {
-  const url = import.meta.env.VITE_API_URL;
-  if (!url) {
-    console.warn('VITE_API_URL not defined, using default localhost URL');
-    return 'http://localhost:8787';
+  // Check if we're in production by looking at the hostname
+  const isProduction = typeof window !== 'undefined' && 
+    (window.location.hostname === 'cema.piwisuite.cl' || 
+     window.location.hostname.endsWith('.pages.dev'));
+  
+  if (isProduction) {
+    // In production, use relative URLs (same domain)
+    // The API is served from /api/* on the same domain
+    return '';
   }
-  return url;
+  
+  // Check for environment variable (useful for staging/custom deployments)
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // Default to localhost for development
+  console.warn('Using localhost:8787 for API (development mode)');
+  return 'http://localhost:8787';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

@@ -5,8 +5,9 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const apiPath = url.pathname;
   
-  // Forward the request to the worker
-  const workerUrl = `https://cema.piwisuite.cl${apiPath}${url.search}`;
+  // Forward the request to the worker's default subdomain
+  // Using Workers.dev subdomain to avoid domain conflict
+  const workerUrl = `https://cema-worker.jeans.workers.dev${apiPath}${url.search}`;
   
   const response = await fetch(workerUrl, {
     method: request.method,
