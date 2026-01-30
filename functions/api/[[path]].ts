@@ -7,7 +7,7 @@ export async function onRequest(context) {
   
   // Forward the request to the worker's default subdomain
   // Using Workers.dev subdomain to avoid domain conflict
-  const workerUrl = `https://cema-worker.jeans.workers.dev${apiPath}${url.search}`;
+  const workerUrl = `https://cema-worker.jeans-selfene.workers.dev${apiPath}${url.search}`;
   
   const response = await fetch(workerUrl, {
     method: request.method,
