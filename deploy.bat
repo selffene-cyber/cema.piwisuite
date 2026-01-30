@@ -99,8 +99,12 @@ echo %GREEN%[OK] Worker deployed successfully%RESET%
 echo.
 
 echo %YELLOW%--- Deploying Cloudflare Pages ---%RESET%
-echo Note: For Pages deployment, use Cloudflare Dashboard or wrangler pages command
-echo Current configuration: Pages will auto-deploy from main branch on push.
+npx wrangler pages deploy deployment --project-name=cema-frontend
+if %errorlevel% neq 0 (
+    echo %RED%[ERROR] Pages deployment failed!%RESET%
+    exit /b 1
+)
+echo %GREEN%[OK] Pages deployed successfully%RESET%
 echo.
 
 REM Push to GitHub
