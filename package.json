@@ -7,22 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npx wrangler deploy --assets=./deployment",
-    "deploy:prod": "npx wrangler deploy --env production",
+    "deploy": "npx wrangler deploy --assets=./dist",
+    "deploy:prod": "npx wrangler deploy --env production --assets=./dist",
     "wrangler:login": "npx wrangler login",
     "wrangler:dev": "npx wrangler dev",
     "db:create": "npx wrangler d1 create cema_database",
     "db:push": "npx wrangler d1 execute cema_database --file=schema.sql --local",
     "db:push:remote": "npx wrangler d1 execute cema_database --file=schema.sql --remote",
     "db:studio": "npx wrangler d1 studio cema_database"
-  },
-  "dependencies": {
-    "chart.js": "^4.5.1",
-    "html2canvas": "^1.4.1",
-    "jspdf": "^4.0.0",
-    "react": "^19.2.4",
-    "react-chartjs-2": "^5.3.1",
-    "react-dom": "^19.2.4"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
