@@ -6,15 +6,22 @@ import Dashboard from './screens/Dashboard';
 import EvaluationForm from './screens/EvaluationForm';
 import Home from './screens/Home';
 import Layout from './components/Layout';
+import CEMALoading from './components/CEMALoading';
 import { evaluationsApi, authApi } from './utils/api';
 
 const App: React.FC = () => {
+  const [showLoading, setShowLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeModule, setActiveModule] = useState<string>('home');
   const [view, setView] = useState<'dashboard' | 'form'>('dashboard');
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Handle loading finish
+  const handleLoadingFinish = useCallback(() => {
+    setShowLoading(false);
+  }, []);
 
   // Fetch evaluations from API
   const fetchEvaluations = useCallback(async () => {
@@ -59,6 +66,10 @@ const App: React.FC = () => {
       throw new Error('Error al guardar evaluación: ' + err.message);
     }
   };
+
+  if (showLoading) {
+    return <CEMALoading onFinish={handleLoadingFinish} />;
+  }
 
   if (!currentUser) {
     return <Login onLogin={handleLogin} />;
