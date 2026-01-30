@@ -1,0 +1,26 @@
+name = "cema-piwisuite"
+main = "src/worker.ts"
+compatibility_date = "2026-01-30"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database Configuration
+[[d1_databases]]
+binding = "DB"
+database_name = "cema_database"
+database_id = "b2466734-82be-4364-8bab-698a8aa06660"
+
+# R2 Object Storage Configuration
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "cema-files"
+
+# Environment variables (for local development)
+[vars]
+ENVIRONMENT = "development"
+
+# Cloudflare Pages Configuration
+[build]
+command = "npm run build"
+
+[pages]
+pages_build_output_dir = "dist"

@@ -25,7 +25,6 @@ dist-ssr
 
 # Wrangler artifacts
 .wrangler
-wrangler.toml
 *.worker
 
 # Environment files
