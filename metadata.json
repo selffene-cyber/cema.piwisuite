@@ -1,0 +1,8 @@
+
+{
+  "name": "Asistente CEMA",
+  "description": "Aplicación profesional para el análisis de cintas transportadoras basado en el estándar CEMA.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

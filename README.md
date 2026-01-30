@@ -1,0 +1,134 @@
+# CEMA Application
+
+A React/TypeScript application for the CEMA (Centro de Estudios y Mejoramiento Ambiental) evaluation system.
+
+## Features
+
+- Dashboard with statistics
+- Student evaluation management
+- File storage with Cloudflare R2
+- PDF report generation
+- Responsive design
+
+## Tech Stack
+
+- **Frontend**: React 19, TypeScript, Vite
+- **Backend**: Cloudflare Workers (D1, R2)
+- **Storage**: Cloudflare R2 Object Storage
+- **Database**: Cloudflare D1
+- **Authentication**: JWT-based auth
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or pnpm
+- Cloudflare account
+- Wrangler CLI (`npm install -g wrangler`)
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Copy environment template
+cp .env.example .env
+
+# Start development server
+npm run dev
+```
+
+### Cloudflare Setup
+
+1. **Login to Cloudflare**:
+   ```bash
+   npm run wrangler:login
+   ```
+
+2. **Create D1 Database**:
+   ```bash
+   npm run db:create
+   ```
+   Copy the database_id to `wrangler.toml`
+
+3. **Push Database Schema**:
+   ```bash
+   # Local development
+   npm run db:push
+
+   # Remote (production)
+   npm run db:push:remote
+   ```
+
+4. **Create R2 Bucket**:
+   - Go to Cloudflare Dashboard > R2
+   - Create bucket named `cema-files`
+   - Generate API token with read/write permissions
+   - Add credentials to `.env`
+
+5. **Deploy Worker**:
+   ```bash
+   # Development
+   npm run wrangler:dev
+
+   # Production
+   npm run deploy
+   ```
+
+### GitHub Repository
+
+The application is connected to GitHub repository:
+https://github.com/selffene-cyber/cema.piwisuite
+
+## Deployment
+
+### Deploy to Cloudflare Workers
+
+```bash
+# Deploy to production
+npm run deploy:prod
+```
+
+### Set Environment Variables
+
+```bash
+# Set secrets for production
+wrangler secret put CLOUDFLARE_API_TOKEN
+```
+
+## API Endpoints
+
+- `GET /api/health` - Health check
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `GET /api/evaluations` - List evaluations
+- `POST /api/evaluations` - Create evaluation
+- `GET /api/evaluations/:id` - Get evaluation details
+- `DELETE /api/evaluations/:id` - Delete evaluation
+- `GET /api/files` - List files
+- `POST /api/files` - Upload file
+- `DELETE /api/files/:key` - Delete file
+- `GET /api/stats` - Dashboard statistics
+
+## Project Structure
+
+```
+asistente-cema/
+├── src/
+│   └── worker.ts          # Cloudflare Worker API
+├── utils/
+│   ├── db.ts              # Database utilities
+│   └── storage.ts         # R2 storage utilities
+├── schema.sql             # D1 database schema
+├── wrangler.toml          # Cloudflare configuration
+├── App.tsx                # Main React component
+├── components/            # React components
+├── screens/               # Application screens
+└── types.ts               # TypeScript definitions
+```
+
+## License
+
+MIT

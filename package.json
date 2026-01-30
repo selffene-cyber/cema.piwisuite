@@ -1,0 +1,36 @@
+{
+  "name": "asistente-cema",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "wrangler deploy",
+    "deploy:prod": "wrangler deploy --env production",
+    "wrangler:login": "npx wrangler login",
+    "wrangler:dev": "npx wrangler dev",
+    "db:create": "npx wrangler d1 create cema_database",
+    "db:push": "npx wrangler d1 execute cema_database --file=schema.sql --local",
+    "db:push:remote": "npx wrangler d1 execute cema_database --file=schema.sql --remote",
+    "db:studio": "npx wrangler d1 studio cema_database"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.0.0",
+    "react": "^19.2.4",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "vite-plugin-pwa": "^1.2.0",
+    "wrangler": "^3.101.0"
+  }
+}
