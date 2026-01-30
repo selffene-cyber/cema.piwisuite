@@ -120,54 +120,210 @@ export default {
 };
 
 // Auth handlers
-async function handleLogin(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
-    const { email, password } = await request.json() as { email: string; password: string };
-    
-    const result = await env.DB.prepare(
-        'SELECT id, email, name, role FROM users WHERE email = ? AND password_hash = ?'
-    ).bind(email, password).first();
+async function hashPassword(password: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
 
-    if (!result) {
-        return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-            status: 401,
+async function handleLogin(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
+    let body: { email?: string; password?: string };
+    
+    try {
+        body = await request.json() as { email?: string; password?: string };
+    } catch (e) {
+        return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+            status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
     }
+    
+    const email = body?.email;
+    const password = body?.password;
+    
+    if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
+        return new Response(JSON.stringify({ error: 'Email and password are required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    }
+    
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    if (!trimmedEmail || !password) {
+        return new Response(JSON.stringify({ error: 'Email and password cannot be empty' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    }
+    
+    try {
+        const hashedPassword = await hashPassword(password);
+        
+        console.log('Login attempt for email:', trimmedEmail);
+        
+        // First, check if user exists
+        const user = await env.DB.prepare(
+            'SELECT id, email, name, role, password_hash FROM users WHERE email = ?'
+        ).bind(trimmedEmail).first();
+        
+        if (!user) {
+            console.log('User not found:', trimmedEmail);
+            return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+                status: 401,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+        
+        // Compare password hashes
+        if (user.password_hash !== hashedPassword) {
+            console.log('Password mismatch for user:', trimmedEmail);
+            return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+                status: 401,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
 
-    // In production, generate a proper JWT token
-    const token = `token_${Date.now()}_${result.id}`;
+        // In production, generate a proper JWT token
+        const token = `token_${Date.now()}_${user.id}`;
 
-    return new Response(JSON.stringify({ 
-        success: true, 
-        token,
-        user: { id: result.id, email: result.email, name: result.name, role: result.role }
-    }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+        console.log('Login successful for user:', trimmedEmail);
+        
+        return new Response(JSON.stringify({ 
+            success: true, 
+            token,
+            user: { id: user.id, email: user.email, name: user.name, role: user.role }
+        }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    } catch (error: any) {
+        console.error('Login error:', error.message, error.stack);
+        return new Response(JSON.stringify({ error: 'Login failed', message: error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    }
 }
 
 async function handleRegister(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
     const { email, password, name } = await request.json() as { email: string; password: string; name: string };
     
-    try {
-        const result = await env.DB.prepare(
-            'INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)'
-        ).bind(email, password, name, 'user').run();
-
-        return new Response(JSON.stringify({ 
-            success: true, 
-            message: 'User registered successfully'
-        }), {
-            status: 201,
+    // Validate required fields
+    if (!email || !password || !name) {
+        return new Response(JSON.stringify({ error: 'Email, password, and name are required' }), {
+            status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
-    } catch (error: any) {
-        if (error.message?.includes('UNIQUE constraint failed')) {
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return new Response(JSON.stringify({ error: 'Invalid email format' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    }
+    
+    // Trim and validate inputs
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedName = name.trim();
+    
+    if (trimmedEmail.length < 5 || trimmedEmail.length > 254) {
+        return new Response(JSON.stringify({ error: 'Email must be between 5 and 254 characters' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    }
+    
+    if (trimmedName.length < 2 || trimmedName.length > 100) {
+        return new Response(JSON.stringify({ error: 'Name must be between 2 and 100 characters' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    }
+    
+    if (password.length < 6) {
+        return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    }
+    
+    try {
+        const hashedPassword = await hashPassword(password);
+        
+        console.log('Attempting registration for email:', trimmedEmail);
+        
+        // Check if user already exists first (avoid D1 constraint error 1042)
+        const existingUser = await env.DB.prepare(
+            'SELECT id, email FROM users WHERE email = ?'
+        ).bind(trimmedEmail).first();
+        
+        if (existingUser) {
+            console.log('User already exists with email:', trimmedEmail);
             return new Response(JSON.stringify({ error: 'Email already exists' }), {
                 status: 400,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
+        
+        // Insert new user
+        const result = await env.DB.prepare(
+            'INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)'
+        ).bind(trimmedEmail, hashedPassword, trimmedName, 'user').run();
+
+        console.log('User registered successfully');
+
+        // Return success without trying to fetch (D1 run() doesn't return id)
+        return new Response(JSON.stringify({ 
+            success: true, 
+            message: 'User registered successfully',
+            user: { email: trimmedEmail, name: trimmedName, role: 'user' }
+        }), {
+            status: 201,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    } catch (error: any) {
+        console.error('Registration error details:', {
+            message: error.message,
+            code: error.code,
+            cause: error.cause,
+            stack: error.stack
+        });
+        
+        // Check for various D1 error patterns for duplicate email
+        const errorMsg = String(error.message || error || '');
+        const errorCode = error.code;
+        
+        // D1 error codes: 1042 = constraint violation, 23505 = unique constraint
+        if (errorCode === 1042 || errorCode === '1042' || 
+            errorCode === 23505 || errorCode === '23505' ||
+            errorMsg.includes('UNIQUE') || errorMsg.includes('unique') || 
+            errorMsg.includes('duplicate') || errorMsg.includes('constraint') ||
+            errorMsg.includes('already exists') || 
+            errorMsg.includes('FOREIGN KEY') || errorMsg.includes('foreign key')) {
+            console.log('Constraint violation detected, likely duplicate email');
+            return new Response(JSON.stringify({ error: 'Email already exists' }), {
+                status: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+        
+        // Check for NOT NULL constraint violations
+        if (errorMsg.includes('NOT NULL') || errorMsg.includes('not null') || 
+            errorMsg.includes('NOTNULL') || errorMsg.includes('null')) {
+            console.error('NOT NULL constraint violation - check input values');
+            return new Response(JSON.stringify({ error: 'Invalid data provided' }), {
+                status: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+        
+        // Re-throw for other errors (500)
         throw error;
     }
 }

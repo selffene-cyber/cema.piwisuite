@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Asistente CEMA</title>
+    <meta name="theme-color" content="#ffffff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #2dce89;
+            --brand-secondary: #5e72e4;
+            --brand-dark: #172b4d;
+            --bg-body: #ffffff;
+            --bg-sidebar: #ffffff;
+            --border-color: #f1f3f5;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: #32325d;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .soft-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 0 2rem 0 rgba(136, 152, 170, .15);
+        }
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            transition: transform 0.3s ease;
+        }
+        .active-menu-item {
+            color: var(--brand-secondary) !important;
+            font-weight: 700;
+            border-right: 3px solid var(--brand-secondary);
+            background-color: #f6f9fc;
+        }
+        .btn-filter-active {
+            background-color: var(--brand-secondary);
+            color: white !important;
+        }
+        /* Mobile handling */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                height: 100vh;
+                z-index: 100;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+        input, select {
+            border: 1px solid #dee2e6 !important;
+            border-radius: 0.5rem;
+            padding: 0.625rem 0.75rem;
+        }
+        input:focus, select:focus {
+            border-color: var(--brand-secondary) !important;
+            outline: none;
+            box-shadow: 0 3px 9px rgba(50, 50, 9, 0.05), 0 3px 15px rgba(94, 114, 228, 0.1) !important;
+        }
+    </style>
+
+<link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/index.css">
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-DXPyiX4S.js"></script>
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+<body>
+    <div id="root"></div>
+</body>
+</html>

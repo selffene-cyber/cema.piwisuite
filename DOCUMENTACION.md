@@ -93,8 +93,59 @@ npm run dev    # Servidor con hot reload en http://localhost:3000
 npm run build  # Build de producción con optimización PWA
 ```
 
-### Estado de Iconos
-⚠️ Los iconos `icon-192.png` y `icon-512.png` deben agregarse a la carpeta `public/` para completar la instalación PWA.
+---
+
+## 8. Infraestructura Cloudflare
+
+### 8.1 Arquitectura General
+- **Frontend**: Cloudflare Pages (cema-frontend)
+- **API**: Cloudflare Worker (cema-worker)
+- **Base de Datos**: Cloudflare D1 (cema_database)
+- **Almacenamiento**: Cloudflare R2 (cema-files)
+
+### 8.2 URLs y Endpoints
+| Servicio | URL | Propósito |
+|----------|-----|-----------|
+| Frontend | https://cema.piwisuite.cl | Interfaz de usuario |
+| Worker API | https://cema-worker.jeans-selfene.workers.dev/api/* | API REST |
+| Pages Preview | https://fcb45036.cema-frontend.pages.dev | Preview de despliegues |
+
+### 8.3 Endpoints de la API
+- **POST /api/auth/login** - Autenticación
+- **POST /api/auth/register** - Registro
+- **GET/POST /api/evaluations** - Evaluaciones CEMA
+- **GET/POST/DELETE /api/files** - Archivos en R2
+- **GET /api/stats** - Estadísticas del dashboard
+
+### 8.4 Flujo de Datos
+```
+Usuario → cema.piwisuite.cl (Pages)
+    ↓ (render React)
+    ├─→ /api/* → cema-worker.jeans-selfene.workers.dev (Worker)
+    ↓         ├─→ D1 (consultas SQL)
+    ↓         └─→ R2 (archivos)
+```
+
+## 9. Despliegue
+
+### 9.1 Comandos de Despliegue
+```bash
+# Desplegar Worker (API)
+npm run deploy
+
+# Desplegar Frontend (Pages)
+npm run build ; npx wrangler pages deploy deployment --project-name=cema-frontend
+```
+
+### 9.2 Ramas Git
+- **main**: Rama de producción (desplegada automáticamente)
+- **desarrollo**: Rama de desarrollo local
+
+### 9.3 Flujo de Trabajo
+1. Trabajar en rama `desarrollo`
+2. Hacer commits locales
+3. Mergear a `main` para desplegar
 
 ---
+
 *Este documento es parte del repositorio oficial del Asistente CEMA.*

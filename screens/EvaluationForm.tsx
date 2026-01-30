@@ -40,6 +40,7 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel }) => 
   });
 
   const [result, setResult] = useState<{ total: number; severityClass: number; breakdown: { beltWidth: number; beltSpeed: number; spliceType: number; abrasiveness: number; moisture: number } } | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const chartRef = useRef<any>(null);
 
@@ -54,7 +55,7 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel }) => 
     setResult(calc);
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     if (!result) return;
 
     const newEval: Evaluation = {
@@ -64,7 +65,10 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel }) => 
       totalScore: result.total,
       severityClass: result.severityClass
     };
-    onSave(newEval);
+    
+    setSaving(true);
+    await onSave(newEval);
+    setSaving(false);
   };
 
   const handleDownloadPDF = async () => {
@@ -277,10 +281,10 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel }) => 
             </button>
             <button
               onClick={handleFinish}
-              disabled={!result}
-              className="px-12 py-5 bg-[#5e72e4] text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:bg-[#435ad8] transition-all disabled:opacity-20 active:scale-[0.98]"
+              disabled={!result || saving}
+              className="px-12 py-5 bg-[#5e72e4] text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:bg-[#435ad8] transition-all disabled:opacity-50 active:scale-[0.98]"
             >
-              Guardar Evaluación
+              {saving ? 'Guardando...' : 'Guardar Evaluación'}
             </button>
           </div>
         </div>

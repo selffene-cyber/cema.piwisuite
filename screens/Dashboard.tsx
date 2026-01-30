@@ -6,9 +6,10 @@ interface DashboardProps {
   evaluations: Evaluation[];
   onNewEvaluation: () => void;
   activeModule: string;
+  loading?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ evaluations, onNewEvaluation, activeModule }) => {
+const Dashboard: React.FC<DashboardProps> = ({ evaluations, onNewEvaluation, activeModule, loading }) => {
   return (
     <div className="flex flex-col space-y-6 animate-in fade-in duration-500">
       <div className="soft-card p-6 lg:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-l-4 border-l-[#5e72e4]">
@@ -25,7 +26,15 @@ const Dashboard: React.FC<DashboardProps> = ({ evaluations, onNewEvaluation, act
       </div>
 
       <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5">
-        {evaluations.length === 0 ? (
+        {loading ? (
+          <div className="col-span-full text-center py-24 soft-card">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-1/4 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+            </div>
+            <p className="text-slate-300 font-bold uppercase text-[10px] tracking-[0.3em] mt-4">Cargando evaluaciones...</p>
+          </div>
+        ) : evaluations.length === 0 ? (
           <div className="col-span-full text-center py-24 soft-card">
             <p className="text-slate-300 font-bold uppercase text-[10px] tracking-[0.3em]">Bandeja de entrada vacía</p>
           </div>

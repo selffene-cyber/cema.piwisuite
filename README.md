@@ -84,7 +84,41 @@ https://github.com/selffene-cyber/cema.piwisuite
 
 ## Deployment
 
-### Deploy to Cloudflare Workers
+### Deploy to Cloudflare Pages (Frontend)
+
+The React frontend is deployed to Cloudflare Pages with a Pages Function that proxies `/api/*` requests to the Worker.
+
+```bash
+# Build the frontend
+npm run build
+
+# Prepare deployment folder (copy dist and functions together)
+powershell -Command "Remove-Item -Recurse -Force deployment; New-Item -ItemType Directory -Force -Path deployment; Copy-Item -Path dist\* -Destination deployment -Recurse; Copy-Item -Path functions -Destination deployment -Recurse"
+
+# Deploy to Cloudflare Pages
+npx wrangler pages deploy deployment --project-name=cema-frontend
+```
+
+**Note:** The first time you deploy, create the Pages project first:
+```bash
+npx wrangler pages project create cema-frontend --production-branch=main
+```
+
+### Set Custom Domain (cema.piwisuite.cl)
+
+Custom domains for Cloudflare Pages must be set up through the Cloudflare Dashboard:
+
+1. Go to **Cloudflare Dashboard** > **Workers & Pages** > **cema-frontend**
+2. Click on **Custom domains** > **Set up a custom domain**
+3. Enter `cema.piwisuite.cl`
+4. Select the domain `piwisuite.cl`
+5. Click **Continue** to verify DNS configuration
+
+Once set up:
+- Frontend: `https://cema.piwisuite.cl/` (serves React app)
+- API: `https://cema.piwisuite.cl/api/*` (proxies to Worker)
+
+### Deploy to Cloudflare Workers (API)
 
 ```bash
 # Deploy to production

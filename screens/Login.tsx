@@ -1,18 +1,33 @@
 
 import React, { useState } from 'react';
+import { authApi } from '../utils/api';
 
 interface LoginProps {
-  onLogin: (email: string) => void;
+  onLogin: (user: { id: string; name: string; email: string }) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
-      onLogin(email);
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await authApi.login(email, password);
+      onLogin({
+        id: response.user?.id?.toString() || '',
+        name: response.user?.name || email.split('@')[0],
+        email: response.user?.email || email
+      });
+    } catch (err: any) {
+      setError(err.message || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -26,6 +41,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <h2 className="text-3xl font-extrabold text-[#32325d] tracking-tight">Bienvenido</h2>
           <p className="mt-3 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] opacity-80">Asistente CEMA Professional</p>
         </div>
+
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium">
+            {error}
+          </div>
+        )}
+
         <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-5">
             <div>
@@ -37,6 +59,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 placeholder="usuario@corporativo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div>
@@ -48,15 +71,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full py-4 px-6 bg-[#5e72e4] rounded-xl text-white font-black shadow-[0_10px_30px_rgba(94,114,228,0.3)] hover:bg-[#435ad8] hover:shadow-[0_15px_35px_rgba(94,114,228,0.4)] transition-all uppercase text-[11px] tracking-[0.2em] active:scale-[0.98]"
+            disabled={loading}
+            className="w-full py-4 px-6 bg-[#5e72e4] rounded-xl text-white font-black shadow-[0_10px_30px_rgba(94,114,228,0.3)] hover:bg-[#435ad8] hover:shadow-[0_15px_35px_rgba(94,114,228,0.4)] transition-all uppercase text-[11px] tracking-[0.2em] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Ingresar al Panel
+            {loading ? 'Ingresando...' : 'Ingresar al Panel'}
           </button>
         </form>
       </div>
