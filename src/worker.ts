@@ -342,17 +342,25 @@ async function handleGetEvaluations(env: Env, corsHeaders: Record<string, string
 async function handleCreateEvaluation(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
     const data = await request.json() as any;
     
+    // Validate required fields
+    if (!data.student_name || !data.student_rut || !data.course || !data.evaluation_date) {
+        return new Response(JSON.stringify({ error: 'Faltan campos requeridos: student_name, student_rut, course, evaluation_date' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    }
+    
     const result = await env.DB.prepare(
         `INSERT INTO evaluations (student_name, student_rut, course, evaluation_date, evaluator_id, total_score, max_score, status) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
-        data.student_name,
-        data.student_rut,
-        data.course,
-        data.evaluation_date,
+        data.student_name || null,
+        data.student_rut || null,
+        data.course || null,
+        data.evaluation_date || null,
         data.evaluator_id || null,
-        data.total_score || 0,
-        data.max_score || 100,
+        data.total_score ?? 0,
+        data.max_score ?? 100,
         data.status || 'pending'
     ).run();
 
