@@ -76,6 +76,12 @@ export async function apiFetch<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    
+    // Handle 401 Unauthorized with user-friendly message
+    if (response.status === 401) {
+      throw new Error('Usuario o contraseña incorrectos');
+    }
+    
     throw new Error(error.message || `HTTP error! status: ${response.status}`);
   }
 

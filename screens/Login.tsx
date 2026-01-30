@@ -1,6 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { authApi } from '../utils/api';
+
+// Audio file path - handle special characters in filename
+const AUDIO_PATH = '/sound/sonido cema loading .mp3';
 
 interface LoginProps {
   onLogin: (user: { id: string; name: string; email: string }) => void;
@@ -11,6 +14,29 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Play audio on component mount
+  useEffect(() => {
+    audioRef.current = new Audio(AUDIO_PATH);
+    audioRef.current.volume = 0.5;
+
+    const playAudio = async () => {
+      try {
+        await audioRef.current?.play();
+      } catch (err) {
+        console.log('Audio playback failed:', err);
+      }
+    };
+    playAudio();
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,17 +61,19 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#f8f9fa]">
       <div className="w-full max-w-md space-y-10 bg-white p-8 lg:p-12 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100">
         <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-[#5e72e4] rounded-2xl flex items-center justify-center font-bold text-3xl text-white shadow-xl shadow-blue-500/20 mb-8">
-            C
-          </div>
+          <img
+            src="/icon/favicon-96x96.png"
+            alt="CEMA Logo"
+            className="mx-auto w-16 h-16 rounded-2xl shadow-xl mb-8"
+          />
           <h2 className="text-3xl font-extrabold text-[#32325d] tracking-tight">Bienvenido</h2>
-          <p className="mt-3 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] opacity-80">Asistente CEMA Professional</p>
+          <p className="mt-3 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] opacity-80">Asistente CEMA</p>
         </div>
 
         {error && (
-          <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium">
+          <p className="text-center text-red-600 text-sm font-medium mb-2">
             {error}
-          </div>
+          </p>
         )}
 
         <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
@@ -56,7 +84,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 type="email"
                 required
                 className="block w-full rounded-xl px-5 py-4 text-sm font-medium text-slate-700 bg-gray-50/50 border-gray-200 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
-                placeholder="usuario@corporativo.com"
+                placeholder="tucorreo@correo.cl"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}

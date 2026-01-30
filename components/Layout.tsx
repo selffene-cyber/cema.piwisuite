@@ -102,7 +102,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, onLogout, activeModule
 
         <footer className="p-8 border-t border-gray-50 text-center">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            &copy; 2024 CEMA Standard Assistant • Ingeniería Aplicada
+            &copy; CEMA Standard Assistant • Ingeniería Aplicada
           </p>
         </footer>
       </main>
