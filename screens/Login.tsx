@@ -1,12 +1,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { authApi } from '../utils/api';
+import { User } from '../types';
 
 // Audio file path - handle special characters in filename
 const AUDIO_PATH = '/sound/sonido cema loading .mp3';
 
 interface LoginProps {
-  onLogin: (user: { id: string; name: string; email: string }) => void;
+  onLogin: (user: User) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -48,7 +49,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       onLogin({
         id: response.user?.id?.toString() || '',
         name: response.user?.name || email.split('@')[0],
-        email: response.user?.email || email
+        email: response.user?.email || email,
+        role: response.user?.role || 'Técnico',
+        estado: response.user?.estado || 'Activo'
       });
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');

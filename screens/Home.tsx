@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Evaluation } from '../types';
 
 interface HomeProps {
@@ -7,10 +7,195 @@ interface HomeProps {
   setActiveModule: (module: string) => void;
 }
 
+// Helper function to format date based on period
+const formatDateKey = (date: Date, period: 'Día' | 'Semana' | 'Mes' | 'Año'): string => {
+  switch (period) {
+    case 'Día':
+      return date.toISOString().slice(0, 13); // Hourly for day view
+    case 'Semana':
+      return date.toISOString().slice(0, 10); // Daily for week view
+    case 'Mes':
+      return date.toISOString().slice(0, 10); // Daily for month view
+    case 'Año':
+      return date.toISOString().slice(0, 7); // Monthly for year view
+  }
+};
+
+// Helper function to get date label
+const getDateLabel = (dateKey: string, period: 'Día' | 'Semana' | 'Mes' | 'Año'): string => {
+  const date = new Date(dateKey);
+  switch (period) {
+    case 'Día':
+      return date.getHours().toString().padStart(2, '0') + ':00';
+    case 'Semana':
+      return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    case 'Mes':
+      return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    case 'Año':
+      return date.toLocaleDateString('es-ES', { month: 'short' });
+  }
+};
+
+// Get date range for the selected period
+const getDateRange = (period: 'Día' | 'Semana' | 'Mes' | 'Año'): { start: Date; end: Date } => {
+  const now = new Date();
+  const end = new Date(now);
+  let start: Date;
+
+  switch (period) {
+    case 'Día':
+      start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      break;
+    case 'Semana':
+      start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
+    case 'Mes':
+      start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
+    case 'Año':
+      start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      break;
+  }
+
+  return { start, end };
+};
+
+// Generate all date keys for the period (including zeros)
+const generateDateKeys = (period: 'Día' | 'Semana' | 'Mes' | 'Año'): string[] => {
+  const { start, end } = getDateRange(period);
+  const keys: string[] = [];
+  const current = new Date(start);
+
+  while (current <= end) {
+    keys.push(formatDateKey(current, period));
+    switch (period) {
+      case 'Día':
+        current.setHours(current.getHours() + 1);
+        break;
+      case 'Semana':
+      case 'Mes':
+        current.setDate(current.getDate() + 1);
+        break;
+      case 'Año':
+        current.setMonth(current.getMonth() + 1);
+        break;
+    }
+  }
+
+  return keys;
+};
+
+// Aggregate evaluations by date
+const aggregateEvaluations = (
+  evaluations: Evaluation[],
+  period: 'Día' | 'Semana' | 'Mes' | 'Año',
+  moduleFilter: 'Todos' | 'CEMA 576' | 'Impacto'
+): Map<string, number> => {
+  const filtered = moduleFilter === 'Todos'
+    ? evaluations
+    : evaluations.filter(e => e.module === moduleFilter);
+
+  const aggregation = new Map<string, number>();
+
+  filtered.forEach(evalItem => {
+    const dateKey = formatDateKey(new Date(evalItem.timestamp), period);
+    aggregation.set(dateKey, (aggregation.get(dateKey) || 0) + 1);
+  });
+
+  return aggregation;
+};
+
+// Generate SVG path from data points with smooth bezier curve
+const generateSVGPath = (dataPoints: number[], maxValue: number, width: number, height: number, padding: number): string => {
+  if (dataPoints.length === 0) return '';
+
+  const chartWidth = width - (padding * 2);
+  const chartHeight = height - (padding * 2);
+  const xStep = chartWidth / (Math.max(dataPoints.length - 1, 1));
+  const yScale = chartHeight / (maxValue || 1);
+
+  // Generate smooth curve using optimized cubic bezier
+  let path = `M${padding},${height - padding - (dataPoints[0] * yScale)}`;
+
+  for (let i = 0; i < dataPoints.length; i++) {
+    const x = padding + (i * xStep);
+    const y = height - padding - (dataPoints[i] * yScale);
+
+    if (i === 0) {
+      path = `M${x},${y}`;
+    } else {
+      // Calculate optimized control points for smoother curve
+      const prevX = padding + ((i - 1) * xStep);
+      const prevY = height - padding - (dataPoints[i - 1] * yScale);
+      const nextX = padding + ((i + 1) * xStep);
+      const nextY = height - padding - (dataPoints[Math.min(i + 1, dataPoints.length - 1)] * yScale);
+      
+      // Use tension-based control points for smoother curve
+      const tension = 0.3;
+      const cp1x = prevX + (x - prevX) * tension;
+      const cp1y = prevY;
+      const cp2x = x - (nextX - x) * tension;
+      const cp2y = y;
+
+      path += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${x},${y}`;
+    }
+  }
+
+  return path;
+};
+
 const Home: React.FC<HomeProps> = ({ evaluations, setActiveModule }) => {
   const [timeFilter, setTimeFilter] = useState<'Día' | 'Semana' | 'Mes' | 'Año'>('Mes');
   const [moduleFilter, setModuleFilter] = useState<'Todos' | 'CEMA 576' | 'Impacto'>('Todos');
   const recentItems = evaluations.slice(0, 6);
+
+  // Calculate chart dimensions
+  const svgWidth = 1000;
+  const svgHeight = 200;
+  const chartPadding = { top: 20, right: 20, bottom: 30, left: 50 };
+  const chartHeight = svgHeight - chartPadding.top - chartPadding.bottom;
+  const chartWidth = svgWidth - chartPadding.left - chartPadding.right;
+
+  // Calculate chart data
+  const { chartData, maxValue, dateLabels } = useMemo(() => {
+    const dateKeys = generateDateKeys(timeFilter);
+    const aggregation = aggregateEvaluations(evaluations, timeFilter, moduleFilter);
+
+    const dataPoints = dateKeys.map(key => aggregation.get(key) || 0);
+    const maxValue = Math.max(...dataPoints, 1); // At least 1 to avoid division by zero
+    const labels = dateKeys.map(key => getDateLabel(key, timeFilter));
+
+    return {
+      chartData: dataPoints,
+      maxValue,
+      dateLabels: labels
+    };
+  }, [evaluations, timeFilter, moduleFilter]);
+
+  // Generate SVG paths
+  const linePath = generateSVGPath(chartData, maxValue, svgWidth, svgHeight, chartPadding.left);
+  const areaPath = linePath + ` V${svgHeight - chartPadding.bottom} H${chartPadding.left} Z`;
+
+  // Sample labels for x-axis (show first, middle, and last)
+  const sampleLabels = useMemo(() => {
+    if (dateLabels.length <= 3) return dateLabels;
+    const step = Math.floor(dateLabels.length / 2);
+    return [
+      dateLabels[0],
+      dateLabels[step],
+      dateLabels[dateLabels.length - 1]
+    ];
+  }, [dateLabels]);
+
+  // Generate Y-axis labels and reference lines
+  const yAxisLabels = useMemo(() => {
+    const labels: number[] = [];
+    const steps = 4; // Number of reference lines
+    for (let i = steps; i >= 0; i--) {
+      labels.push(Math.round((maxValue * i) / steps));
+    }
+    return labels;
+  }, [maxValue]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 w-full pb-10">
@@ -81,39 +266,136 @@ const Home: React.FC<HomeProps> = ({ evaluations, setActiveModule }) => {
         </div>
         
         {/* Full-Width Chart */}
-        <div className="relative h-72 lg:h-96 w-full group">
-          <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 200">
-            <defs>
-              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#5e72e4" stopOpacity="0.15" />
-                <stop offset="100%" stopColor="#5e72e4" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {/* Horizontal Grid */}
-            <line x1="0" y1="40" x2="1000" y2="40" stroke="#f8f9fa" strokeWidth="1" />
-            <line x1="0" y1="80" x2="1000" y2="80" stroke="#f8f9fa" strokeWidth="1" />
-            <line x1="0" y1="120" x2="1000" y2="120" stroke="#f8f9fa" strokeWidth="1" />
-            <line x1="0" y1="160" x2="1000" y2="160" stroke="#f8f9fa" strokeWidth="1" />
-            
-            {/* Smooth Spline Path */}
-            <path 
-              d="M0,140 C100,145 150,110 250,120 C350,130 450,40 550,60 C650,80 750,160 850,140 C950,120 1000,130 1000,130" 
-              fill="none" 
-              stroke="#5e72e4" 
-              strokeWidth="5" 
-              strokeLinecap="round"
-              className="drop-shadow-lg"
-            />
-            <path 
-              d="M0,140 C100,145 150,110 250,120 C350,130 450,40 550,60 C650,80 750,160 850,140 C950,120 1000,130 1000,130 V200 H0 Z" 
-              fill="url(#areaGradient)"
-            />
-          </svg>
+        <div className="flex flex-col w-full">
+          {/* Chart Section */}
+          <div className="relative w-full">
+            <svg className="w-full h-auto" viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#5e72e4" stopOpacity="0.15" />
+                  <stop offset="100%" stopColor="#5e72e4" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              
+              {/* Y-axis labels on the left */}
+              <g className="text-[9px] font-bold text-slate-300">
+                {yAxisLabels.map((label, index) => {
+                  const y = chartPadding.top + (index * (chartHeight / (yAxisLabels.length - 1)));
+                  return (
+                    <g key={index}>
+                      <line 
+                        x1={chartPadding.left} 
+                        y1={y} 
+                        x2={svgWidth - chartPadding.right} 
+                        y2={y} 
+                        stroke="#f8f9fa" 
+                        strokeWidth="1" 
+                        strokeDasharray="4,4" 
+                      />
+                      <text 
+                        x={chartPadding.left - 8} 
+                        y={y + 3} 
+                        textAnchor="end" 
+                        className="uppercase tracking-[0.1em] fill-slate-300"
+                      >
+                        {label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </g>
+              
+              {/* Y-axis line */}
+              <line 
+                x1={chartPadding.left} 
+                y1={chartPadding.top} 
+                x2={chartPadding.left} 
+                y2={svgHeight - chartPadding.bottom} 
+                stroke="#e2e8f0" 
+                strokeWidth="2" 
+              />
+              
+              {/* Data Area Fill */}
+              {chartData.some(d => d > 0) ? (
+                <path 
+                  d={areaPath} 
+                  fill="url(#areaGradient)" 
+                />
+              ) : (
+                <path 
+                  d={`M${chartPadding.left},${svgHeight - chartPadding.bottom} L${svgWidth - chartPadding.right},${svgHeight - chartPadding.bottom} L${svgWidth - chartPadding.right},${svgHeight - chartPadding.bottom} Z`} 
+                  fill="url(#areaGradient)" 
+                />
+              )}
+              
+              {/* Data Line */}
+              {chartData.some(d => d > 0) ? (
+                <path 
+                  d={linePath} 
+                  fill="none" 
+                  stroke="#5e72e4" 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round"
+                  className="drop-shadow-lg"
+                />
+              ) : (
+                <path 
+                  d={`M${chartPadding.left},${svgHeight - chartPadding.bottom} L${svgWidth - chartPadding.right},${svgHeight - chartPadding.bottom}`} 
+                  fill="none" 
+                  stroke="#5e72e4" 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round"
+                  className="drop-shadow-lg"
+                />
+              )}
+              
+
+              
+              {/* X-axis labels */}
+              <g className="text-[9px] font-bold text-slate-300">
+                {sampleLabels.map((label, index) => {
+                  let x: number;
+                  if (sampleLabels.length === 1) {
+                    x = chartPadding.left;
+                  } else if (index === 0) {
+                    x = chartPadding.left;
+                  } else if (index === sampleLabels.length - 1) {
+                    x = svgWidth - chartPadding.right;
+                  } else {
+                    x = chartPadding.left + chartWidth / 2;
+                  }
+                  return (
+                    <text 
+                      key={index}
+                      x={x} 
+                      y={svgHeight - 8} 
+                      textAnchor="middle" 
+                      className="uppercase tracking-[0.1em] fill-slate-300"
+                    >
+                      {label}
+                    </text>
+                  );
+                })}
+              </g>
+            </svg>
+          </div>
           
-          <div className="absolute bottom-4 left-0 right-0 flex justify-between px-4 text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] pointer-events-none">
-            <span>Inicio Periodo</span>
-            <span>Estadística Consolidada</span>
-            <span>Fin Periodo</span>
+          {/* Stats Footer */}
+          <div className="flex justify-center gap-8 sm:gap-12 md:gap-16 mt-6 pt-6 border-t border-gray-100">
+            <div className="text-center">
+              <span className="block text-2xl sm:text-3xl font-black text-[#5e72e4]">{chartData.reduce((a, b) => a + b, 0)}</span>
+              <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Total</span>
+            </div>
+            <div className="text-center">
+              <span className="block text-2xl sm:text-3xl font-black text-[#2dce89]">{Math.max(...chartData)}</span>
+              <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Máximo</span>
+            </div>
+            <div className="text-center">
+              <span className="block text-2xl sm:text-3xl font-black text-[#fb6340]">
+                {chartData.filter(d => d > 0).length}
+              </span>
+              <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Días Act.</span>
+            </div>
           </div>
         </div>
       </div>
