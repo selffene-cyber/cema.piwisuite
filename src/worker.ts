@@ -4,6 +4,7 @@
  */
 
 export interface Env {
+    ASSETS: Fetcher;
     DB: D1Database;
     FILES: R2Bucket;
 }
@@ -30,7 +31,6 @@ export default {
             // API Routes
             if (path.startsWith('/api/')) {
                 const endpoint = path.replace('/api/', '');
-                const method = request.method;
                 
                 // Health check endpoint
                 if (endpoint === 'health') {
@@ -123,6 +123,14 @@ export default {
             if (path.startsWith('/files/')) {
                 const key = path.replace('/files/', '');
                 return await handleServeFile(key, env);
+            }
+
+            // Serve static files from build (dist/) using ASSETS binding
+            if (!path.startsWith('/api/') && !path.startsWith('/files/')) {
+                const staticResponse = await env.ASSETS.fetch(request);
+                if (staticResponse.ok) {
+                    return staticResponse;
+                }
             }
 
             return new Response(JSON.stringify({ error: 'Not found' }), {
