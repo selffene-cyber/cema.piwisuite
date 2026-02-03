@@ -1,0 +1,30 @@
+
+    {/*{* Modal de Seleccion de Cliente */*}
+    {showClienteModal && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowClienteModal(false)}>
+        <div className="bg-white rounded-2xl w-full max-w-md max-h-[70vh] overflow-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 className="font-bold text-[#32325d]">Seleccionar Cliente</h3>
+            <button onClick={() => setShowClienteModal(false)} className="text-slate-400 hover:text-slate-600">X</button>
+          </div>
+          <div className="p-4 space-y-2">
+            {Object.entries(CLIENTE_LABELS).slice(0, 20).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => { setFormData({...formData, clientId: key, clientManual: ''}); setShowClienteModal(false); }}
+                className="w-full text-left px-3 py-2 rounded hover:bg-gray-50 text-sm font-bold text-[#32325d]"
+              >
+                {label}
+              </button>
+            ))}
+            <button
+              onClick={() => { setFormData({...formData, clientId: 'otro', clientManual: ''}); setShowClienteModal(false); }}
+              className="w-full text-left px-3 py-2 rounded bg-blue-50 text-blue-600 text-sm font-bold"
+            >
+              Otro (especificar)
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  );

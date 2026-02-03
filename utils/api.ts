@@ -6,17 +6,29 @@
  */
 
 // Get the API base URL based on environment
-// In production (cema.piwisuite.cl), use relative URLs since API is on same domain
-// In development, use localhost:8787 for local Wrangler dev server
 const getApiBaseUrl = (): string => {
-  // Check if we're in production by looking at the hostname
+  // Always use localhost for development (localhost or 127.0.0.1 or local IPs)
+  const isLocalhost = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.startsWith('10.') ||
+    window.location.hostname.startsWith('172.')
+  );
+  
+  if (isLocalhost) {
+    // Use localhost:8787 for local development
+    console.warn('Using localhost:8787 for API (local development)');
+    return 'http://localhost:8787';
+  }
+  
+  // Check if we're in production (cema.piwisuite.cl or pages.dev)
   const isProduction = typeof window !== 'undefined' && 
     (window.location.hostname === 'cema.piwisuite.cl' || 
      window.location.hostname.endsWith('.pages.dev'));
   
   if (isProduction) {
     // In production, use relative URLs (same domain)
-    // The API is served from /api/* on the same domain
     return '';
   }
   
@@ -26,8 +38,8 @@ const getApiBaseUrl = (): string => {
     return envUrl;
   }
   
-  // Default to localhost for development
-  console.warn('Using localhost:8787 for API (development mode)');
+  // Default fallback
+  console.warn('Unknown environment, using localhost:8787');
   return 'http://localhost:8787';
 };
 
@@ -42,6 +54,8 @@ export const API_ENDPOINTS = {
   EVALUATIONS: {
     LIST: `${API_BASE_URL}/api/evaluations`,
     CREATE: `${API_BASE_URL}/api/evaluations`,
+    GET_BY_ID: (id: string) => `${API_BASE_URL}/api/evaluations/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/evaluations/${id}`,
   },
   FILES: {
     LIST: `${API_BASE_URL}/api/files`,
@@ -49,6 +63,13 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `${API_BASE_URL}/api/files/${id}`,
   },
   STATS: `${API_BASE_URL}/api/stats`,
+  USERS: {
+    LIST: `${API_BASE_URL}/api/users`,
+    CREATE: `${API_BASE_URL}/api/users`,
+    GET_BY_ID: (id: string) => `${API_BASE_URL}/api/users/${id}`,
+    UPDATE: (id: string) => `${API_BASE_URL}/api/users/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/users/${id}`,
+  },
 };
 
 /**
@@ -75,14 +96,23 @@ export async function apiFetch<T>(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    const errorText = await response.text();
+    let errorData;
+    try {
+      errorData = JSON.parse(errorText);
+    } catch {
+      errorData = { message: errorText || 'Request failed' };
+    }
     
     // Handle 401 Unauthorized with user-friendly message
     if (response.status === 401) {
       throw new Error('Usuario o contraseña incorrectos');
     }
     
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    // Show full error message including server details
+    const errorMsg = errorData?.message || errorText || `HTTP error! status: ${response.status}`;
+    console.error('API Error:', response.status, 'Raw:', errorText);
+    throw new Error(errorMsg);
   }
 
   // Handle empty responses
@@ -139,10 +169,20 @@ export const evaluationsApi = {
     return apiFetch<any[]>(API_ENDPOINTS.EVALUATIONS.LIST);
   },
 
+  async getById(id: string) {
+    return apiFetch<any>(API_ENDPOINTS.EVALUATIONS.GET_BY_ID(id));
+  },
+
   async create(data: any) {
     return apiFetch<any>(API_ENDPOINTS.EVALUATIONS.CREATE, {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  },
+
+  async deleteById(id: string) {
+    return apiFetch<{ success: boolean }>(API_ENDPOINTS.EVALUATIONS.DELETE(id), {
+      method: 'DELETE',
     });
   },
 };
@@ -188,5 +228,38 @@ export const filesApi = {
 export const statsApi = {
   async get() {
     return apiFetch<any>(API_ENDPOINTS.STATS);
+  },
+};
+
+/**
+ * Users API functions
+ */
+export const usersApi = {
+  async getAll() {
+    return apiFetch<any[]>(API_ENDPOINTS.USERS.LIST);
+  },
+
+  async getById(id: string) {
+    return apiFetch<any>(API_ENDPOINTS.USERS.GET_BY_ID(id));
+  },
+
+  async create(data: any) {
+    return apiFetch<any>(API_ENDPOINTS.USERS.CREATE, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async update(id: string, data: any) {
+    return apiFetch<any>(API_ENDPOINTS.USERS.UPDATE(id), {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async delete(id: string) {
+    return apiFetch<{ success: boolean }>(API_ENDPOINTS.USERS.DELETE(id), {
+      method: 'DELETE',
+    });
   },
 };

@@ -31,11 +31,15 @@ La aplicación ha sido diseñada bajo la estrategia **Mobile-First**:
 - **Login de Usuario**: Acceso seguro para personal autorizado.
 - **Dashboard de Inicio**:
     - Acceso rápido a módulos.
-    - Gráfico de actividad con filtros (Día, Semana, Mes, Año).
+    - Gráfico de actividad con filtros por período (Día, Semana, Mes, Año) y módulo.
     - Resumen histórico de las últimas evaluaciones.
 - **Módulo CEMA 576**:
     - Historial completo de evaluaciones por cliente y tag.
     - Formulario de evaluación en 3 pasos (Identificación, Datos Técnicos, Condiciones del Material).
+    - **Toggle Vista Lista/Tarjeta**: Cambiar entre visualización en lista o tarjetas en el historial.
+    - **Filtros Avanzados**: Filtrar por nombre de cliente, clase de severidad, rango de fechas y ancho de banda.
+    - **Vista de Detalle**: Página de detalle con gráfico radar y información completa de la evaluación.
+    - **Eliminar Evaluación**: Funcionalidad de eliminación con modal de confirmación.
 - **Cálculo de Severidad**: Motor de cálculo automático que determina la **Clase de Severidad (C1 a C5)**.
 
 ---
@@ -59,6 +63,11 @@ El corazón de la aplicación utiliza las siguientes variables para determinar e
 - [x] Historial con Timestamp
 - [x] Gráficos de Actividad
 - [x] Diseño Mobile-First / PWA
+- [x] Toggle Vista Lista/Tarjeta
+- [x] Filtros Avanzados (cliente, severidad, fecha, ancho de banda)
+- [x] Página de Detalle con Gráfico Radar
+- [x] Eliminación con Confirmación
+- [x] Gráfico con Filtros de Período
 - [ ] Análisis de Impacto (En construcción)
 - [ ] Calculadora Técnica (En construcción)
 
@@ -114,6 +123,8 @@ npm run build  # Build de producción con optimización PWA
 - **POST /api/auth/login** - Autenticación
 - **POST /api/auth/register** - Registro
 - **GET/POST /api/evaluations** - Evaluaciones CEMA
+- **GET /api/evaluations/:id** - Obtener evaluación por ID
+- **DELETE /api/evaluations/:id** - Eliminar evaluación por ID
 - **GET/POST/DELETE /api/files** - Archivos en R2
 - **GET /api/stats** - Estadísticas del dashboard
 
@@ -126,9 +137,58 @@ Usuario → cema.piwisuite.cl (Pages)
     ↓         └─→ R2 (archivos)
 ```
 
-## 9. Despliegue
+## 9. Página de Detalle de Evaluación (EvaluationDetail)
 
-### 9.1 Comandos de Despliegue
+La página de detalle de evaluación proporciona una vista completa e interactiva de cada evaluación CEMA realizada.
+
+### 9.1 Características Principales
+- **Visualización Completa**: Muestra todos los datos de la evaluación en formato estructurado.
+- **Gráfico Radar**: Visualización gráfica de las métricas de severidad permitiendo comparar rápidamente diferentes aspectos de la evaluación.
+- **Score de Severidad**: Display prominente del score calculado y la clase asignada (C1-C5).
+- **Información del Cliente**: Datos de identificación del cliente y ubicación del equipo.
+- **Datos Técnicos**: Información detallada del equipo evaluado (ancho de banda, velocidad, tipo de empalme).
+- **Condiciones del Material**: Datos de abrasividad y humedad.
+
+### 9.2 Acciones Disponibles
+- **Ver Detalle**: Acceso a toda la información de la evaluación.
+- **Eliminar**: Eliminación de la evaluación con modal de confirmación.
+- **Volver**: Navegación de regreso al historial.
+
+### 9.3 Flujo de Usuario
+1. Desde el Dashboard, el usuario puede ver el historial de evaluaciones.
+2. Al seleccionar una evaluación, se navega a la página de detalle.
+3. En la página de detalle, el usuario puede ver el gráfico radar con las métricas.
+4. Si desea eliminar, confirma la acción en el modal de confirmación.
+
+---
+
+## 10. Filtros y Vistas del Dashboard
+
+### 10.1 Toggle Vista Lista/Tarjeta
+El Dashboard ofrece dos modos de visualización para el historial de evaluaciones:
+- **Vista Tarjeta**: Muestra las evaluaciones en formato de tarjetas compactas con información clave visible de un vistazo.
+- **Vista Lista**: Muestra las evaluaciones en formato de tabla con columnas ordenadas para comparación rápida.
+
+### 10.2 Filtros Avanzados
+El sistema incluye un panel de filtros para optimizar la búsqueda de evaluaciones:
+
+| Filtro | Descripción | Tipo |
+|--------|-------------|------|
+| **Nombre Cliente** | Filtrar por nombre del cliente evaluado | Texto |
+| **Clase Severidad** | Filtrar por clase CEMA (C1-C5) | Selección múltiple |
+| **Rango Fechas** | Filtrar por período de evaluación | Fecha inicio/fin |
+| **Ancho Banda** | Filtrar por ancho de banda del equipo | Rango o selección |
+
+### 10.3 Aplicación de Filtros
+- Los filtros se aplican en tiempo real mientras el usuario escribe o selecciona opciones.
+- Es posible combinar múltiples filtros simultáneamente.
+- El botón "Limpiar Filtros" reinicia todos los filtros a sus valores por defecto.
+
+---
+
+## 11. Despliegue
+
+### 11.1 Comandos de Despliegue
 ```bash
 # Desplegar Worker (API)
 npm run deploy
@@ -137,11 +197,11 @@ npm run deploy
 npm run build ; npx wrangler pages deploy deployment --project-name=cema-frontend
 ```
 
-### 9.2 Ramas Git
+### 11.2 Ramas Git
 - **main**: Rama de producción (desplegada automáticamente)
 - **desarrollo**: Rama de desarrollo local
 
-### 9.3 Flujo de Trabajo
+### 11.3 Flujo de Trabajo
 1. Trabajar en rama `desarrollo`
 2. Hacer commits locales
 3. Mergear a `main` para desplegar

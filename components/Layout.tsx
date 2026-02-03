@@ -17,6 +17,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, onLogout, activeModule
     { id: 'cema576', label: 'CEMA 576' },
     { id: 'impact', label: 'IMPACTO' },
     { id: 'calc1', label: 'CALCULADORA' },
+    { id: 'configuracion', label: 'CONFIGURACIÓN' },
   ];
 
   return (

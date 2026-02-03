@@ -1,13 +1,23 @@
 -- CEMA Application D1 Database Schema
 -- Created for Cloudflare D1 Database
 
+-- Drop existing tables (for clean re-creation)
+DROP TABLE IF EXISTS evaluation_criteria;
+DROP TABLE IF EXISTS evaluations;
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS files;
+DROP TABLE IF EXISTS users;
+
 -- Users table for authentication
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     name TEXT NOT NULL,
+    telefono TEXT,
+    cargo TEXT,
     role TEXT DEFAULT 'user',
+    estado TEXT DEFAULT 'active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -15,10 +25,28 @@ CREATE TABLE users (
 -- Evaluations table
 CREATE TABLE evaluations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    student_name TEXT NOT NULL,
-    student_rut TEXT NOT NULL,
-    course TEXT NOT NULL,
-    evaluation_date DATE NOT NULL,
+    -- Original CEMA student fields (kept for compatibility)
+    student_name TEXT,
+    student_rut TEXT,
+    course TEXT,
+    evaluation_date DATE,
+    -- CEMA belt analysis fields
+    tag TEXT,
+    faena TEXT,
+    tipo_correa TEXT,
+    tipo_correa_valor TEXT,
+    capacidad_valor REAL,
+    capacidad TEXT,
+    tipo_material TEXT,
+    belt_width_value REAL,
+    belt_width_unit TEXT,
+    belt_speed_value REAL,
+    belt_speed_unit TEXT,
+    splice_type TEXT,
+    abrasiveness TEXT,
+    moisture TEXT,
+    severity_class INTEGER DEFAULT 0,
+    -- Common fields
     evaluator_id INTEGER,
     total_score REAL DEFAULT 0,
     max_score REAL DEFAULT 100,
@@ -78,10 +106,10 @@ CREATE INDEX idx_files_r2_key ON files(r2_key);
 CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
 CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
 
--- Insert default admin user (password: admin123 - change in production)
+-- Insert default admin user (password: cema2026)
 INSERT INTO users (email, password_hash, name, role) 
-VALUES ('admin@piwisuite.cl', 'ADMIN_PASSWORD_HASH_PLACEHOLDER', 'Administrador', 'admin');
+VALUES ('cema@cema.cl', '6104cc944c4efa50fd18e2b1bc4954dbf02e3dfbc5c3aad544f6f2d05215a1eb', 'Administrador CEMA', 'admin');
 
--- Insert default admin user (password: user123 - change in production)
+-- Insert demo user (password: user123)
 INSERT INTO users (email, password_hash, name, role) 
-VALUES ('user@piwisuite.cl', 'USER_PASSWORD_HASH_PLACEHOLDER', 'Usuario', 'user');
+VALUES ('user@piwisuite.cl', 'USER_PASSWORD_HASH_PLACEHOLDER', 'Usuario Demo', 'user');
