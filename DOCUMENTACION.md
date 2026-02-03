@@ -68,6 +68,7 @@ El corazón de la aplicación utiliza las siguientes variables para determinar e
 - [x] Página de Detalle con Gráfico Radar
 - [x] Eliminación con Confirmación
 - [x] Gráfico con Filtros de Período
+- [x] Deployment Unified (Worker + Static Files)
 - [ ] Análisis de Impacto (En construcción)
 - [ ] Calculadora Técnica (En construcción)
 
@@ -106,20 +107,62 @@ npm run build  # Build de producción con optimización PWA
 
 ## 8. Infraestructura Cloudflare
 
-### 8.1 Arquitectura General
-- **Frontend**: Cloudflare Pages (cema-frontend)
-- **API**: Cloudflare Worker (cema-worker)
-- **Base de Datos**: Cloudflare D1 (cema_database)
-- **Almacenamiento**: Cloudflare R2 (cema-files)
+### 8.1 Arquitectura Unificada (Worker + Frontend)
+
+La aplicación utiliza una arquitectura unificada donde **el Worker sirve tanto la API como los archivos estáticos del frontend** mediante el binding `ASSETS`:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Cloudflare Worker                         │
+│  ┌─────────────────┐  ┌─────────────────────────────────┐  │
+│  │   ASSETS        │  │         API Routes               │  │
+│  │   Binding       │  │  /api/auth/*                     │  │
+│  │  (Static Files) │  │  /api/evaluations/*              │  │
+│  │                 │  │  /api/files/*                     │  │
+│  │  • index.html   │  │  /api/stats/*                    │  │
+│  │  • /assets/*    │  └─────────────────────────────────┘  │
+│  │  • /sw.js       │                                        │
+│  └─────────────────┘                                        │
+└─────────────────────────────────────────────────────────────┘
+         ↓                    ↓                    ↓
+    ┌─────────────────────────────────────────────────────┐
+    │              Cloudflare Services                      │
+    │  • D1 Database (cema_database)                       │
+    │  • R2 Bucket (cema-files)                            │
+    └─────────────────────────────────────────────────────┘
+```
 
 ### 8.2 URLs y Endpoints
 | Servicio | URL | Propósito |
 |----------|-----|-----------|
-| Frontend | https://cema.piwisuite.cl | Interfaz de usuario |
-| Worker API | https://cema-worker.jeans-selfene.workers.dev/api/* | API REST |
-| Pages Preview | https://fcb45036.cema-frontend.pages.dev | Preview de despliegues |
+| **Frontend + API** | https://cema.piwisuite.cl | Aplicación completa (dominio personalizado) |
+| **Worker Directo** | https://cema-piwisuite.jeans-selfene.workers.dev | Worker API + Static Files |
+| **D1 Studio** | Cloudflare Dashboard | Administración de base de datos |
 
-### 8.3 Endpoints de la API
+### 8.3 Configuración del Worker
+
+**wrangler.toml:**
+```toml
+name = "cema-piwisuite"
+main = "src/worker.ts"
+compatibility_date = "2025-02-03"
+
+[[assets]]
+binding = "ASSETS"
+directory = "deployment"
+first_party_hook = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cema_database"
+database_id = "..."
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "cema-files"
+```
+
+### 8.4 Endpoints de la API
 - **POST /api/auth/login** - Autenticación
 - **POST /api/auth/register** - Registro
 - **GET/POST /api/evaluations** - Evaluaciones CEMA
@@ -128,14 +171,16 @@ npm run build  # Build de producción con optimización PWA
 - **GET/POST/DELETE /api/files** - Archivos en R2
 - **GET /api/stats** - Estadísticas del dashboard
 
-### 8.4 Flujo de Datos
+### 8.5 Flujo de Datos
 ```
-Usuario → cema.piwisuite.cl (Pages)
-    ↓ (render React)
-    ├─→ /api/* → cema-worker.jeans-selfene.workers.dev (Worker)
-    ↓         ├─→ D1 (consultas SQL)
-    ↓         └─→ R2 (archivos)
+Usuario → cema.piwisuite.cl (Custom Domain → Worker)
+    ↓
+    ├─→ Solicitud no-API → ASSETS binding → Serve static file
+    ├─→ /api/* → API Handler → D1 (consultas SQL)
+    └─→ /files/* → R2 Bucket (archivos)
 ```
+
+---
 
 ## 9. Página de Detalle de Evaluación (EvaluationDetail)
 
@@ -188,23 +233,96 @@ El sistema incluye un panel de filtros para optimizar la búsqueda de evaluacion
 
 ## 11. Despliegue
 
-### 11.1 Comandos de Despliegue
-```bash
-# Desplegar Worker (API)
-npm run deploy
+### 11.1 Flujo de Trabajo Git
 
-# Desplegar Frontend (Pages)
-npm run build ; npx wrangler pages deploy deployment --project-name=cema-frontend
+```bash
+# 1. Trabajar en rama desarrollo
+git checkout desarrollo
+git pull origin desarrollo
+
+# 2. Hacer cambios y commit
+git add -A
+git commit -m "feat: Descripción del cambio"
+
+# 3. Push a desarrollo
+git push origin desarrollo
+
+# 4. Merge a main y push (para deployment)
+git checkout main
+git merge desarrollo
+git push origin main
+
+# 5. Deploy del Worker (opcional, ya que Pages auto-deploya)
+npx wrangler deploy
 ```
 
-### 11.2 Ramas Git
-- **main**: Rama de producción (desplegada automáticamente)
+### 11.2 Deployment Automático
+
+| Acción | Método | Trigger |
+|--------|--------|---------|
+| **Frontend** | Cloudflare Pages | Push a rama `main` (auto-deploy) |
+| **Worker** | Cloudflare Workers | `npx wrangler deploy` (manual) |
+
+### 11.3 Ramas Git
+- **main**: Rama de producción (Pages auto-deploya en cada push)
 - **desarrollo**: Rama de desarrollo local
 
-### 11.3 Flujo de Trabajo
-1. Trabajar en rama `desarrollo`
-2. Hacer commits locales
-3. Mergear a `main` para desplegar
+### 11.4 Dominio Personalizado
+
+El dominio `cema.piwisuite.cl` está configurado en Cloudflare para apuntar al Worker.
+
+**Para configurar el dominio:**
+1. Cloudflare Dashboard → Workers & Pages → cema-piwisuite
+2. Settings → Custom Domains
+3. Agregar `cema.piwisuite.cl`
+
+---
+
+## 12. Base de Datos D1
+
+### 12.1 Esquema Principal
+
+```sql
+-- Tabla de evaluaciones CEMA
+CREATE TABLE evaluations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT DEFAULT (datetime('now')),
+    client TEXT NOT NULL,
+    tag TEXT,
+    severity_class TEXT,
+    belt_width_value REAL,
+    belt_width_unit TEXT,
+    belt_speed_value REAL,
+    belt_speed_unit TEXT,
+    splice_type TEXT,
+    material_abrasivity TEXT,
+    material_moisture TEXT,
+    faena TEXT,
+    tipo_material TEXT,
+    tipo_correa_valor TEXT,
+    capacidad_valor REAL,
+    capacidad TEXT,
+    score REAL
+);
+
+-- Tabla de usuarios
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+```
+
+### 12.2 Comandos D1
+
+```bash
+# Ejecutar schema en base de datos remota
+npx wrangler d1 execute cema_database --file=schema.sql --remote
+
+# Abrir D1 Studio
+npm run db:studio
+```
 
 ---
 

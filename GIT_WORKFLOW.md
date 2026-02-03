@@ -2,13 +2,30 @@
 
 ## Overview
 
-This document describes the Git workflow and deployment process for the CEMA application.
+This document describes the Git workflow and deployment process for the CEMA application. The application uses a **unified Worker architecture** that serves both the API and static frontend files via the Cloudflare Workers `ASSETS` binding.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Cloudflare Worker                             │
+│  ┌─────────────────┐  ┌─────────────────────────────────────┐   │
+│  │   ASSETS        │  │         API Routes                  │   │
+│  │   Binding       │  │  • /api/auth/*                      │   │
+│  │  (Static Files) │  │  • /api/evaluations/*               │   │
+│  │                 │  │  • /api/files/*                     │   │
+│  │  • index.html   │  │  • /api/stats/*                     │   │
+│  │  • /assets/*    │  └─────────────────────────────────────┘   │
+│  │  • /sw.js       │                                            │
+│  └─────────────────┘                                            │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ## Branching Strategy
 
 | Branch | Purpose | Environment |
 |--------|---------|-------------|
-| `main` | Production code | Production |
+| `main` | Production code | Production (auto-deploys via Pages) |
 | `desarrollo` | Development branch | Development/Testing |
 
 ## Development Workflow
@@ -47,10 +64,35 @@ git push origin desarrollo
 
 ### 3. Deploy to Production
 
-When ready to deploy, run the deployment script:
+**Option A: Using deployment scripts (recommended)**
 
 ```bash
-./deploy.bat
+# Deploy Worker manually (from deployment/ directory)
+cd deployment
+npx wrangler deploy
+
+# Or use the batch files
+deploy.bat    # Full deployment workflow
+deploy-prod.bat  # Production deployment only
+```
+
+**Option B: Manual deployment**
+
+```bash
+# 1. Merge desarrollo into main
+git checkout main
+git merge desarrollo
+
+# 2. Push to GitHub (triggers Pages auto-deploy)
+git push origin main
+
+# 3. Deploy Worker
+npx wrangler deploy
+
+# 4. Sync desarrollo branch
+git checkout desarrollo
+git merge main
+git push origin desarrollo
 ```
 
 ## Deployment Script (`deploy.bat`)
@@ -62,30 +104,67 @@ The deployment script performs the following steps:
 3. **Pull Changes** - Gets latest changes from GitHub
 4. **Commit** - Prompts for commit message and commits all changes
 5. **Build** - Runs `npm run build` to build the frontend
-6. **Merge** - Merges `desarrollo` into `main`
-7. **Deploy Worker** - Deploys Cloudflare Worker with `wrangler deploy`
+6. **Deploy** - Runs deployment scripts for Worker
+7. **Merge** - Merges `desarrollo` into `main`
 8. **Push** - Pushes both branches to GitHub
 
 ## Cloudflare Deployment
 
-### Cloudflare Worker
-- Deployed via `npm run deploy` command
-- Configuration: [`wrangler.toml`](wrangler.toml)
-- Entry point: [`src/worker.ts`](src/worker.ts)
+### Cloudflare Worker (Unified)
 
-### Cloudflare Pages
-- Frontend builds to `dist/` directory
-- Auto-deploys on push to `main` branch
-- Configuration: `[pages]` section in `wrangler.toml`
+The Worker serves both API and static files:
+
+- **Command**: `npx wrangler deploy` (from deployment/ directory)
+- **Configuration**: [`wrangler.toml`](wrangler.toml)
+- **Entry point**: [`src/worker.ts`](src/worker.ts)
+- **Static files**: Served via `ASSETS` binding from `deployment/` directory
+
+**wrangler.toml configuration:**
+```toml
+name = "cema-piwisuite"
+main = "src/worker.ts"
+compatibility_date = "2025-02-03"
+
+[[assets]]
+binding = "ASSETS"
+directory = "deployment"
+first_party_hook = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cema_database"
+database_id = "..."
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "cema-files"
+```
+
+### Custom Domain
+
+The custom domain `cema.piwisuite.cl` is configured to point to the Worker:
+
+1. Cloudflare Dashboard → Workers & Pages → cema-piwisuite
+2. Settings → Custom Domains
+3. Add `cema.piwisuite.cl`
+
+### URLs
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| App | https://cema.piwisuite.cl | Full application |
+| Worker | https://cema-piwisuite.jeans-selfene.workers.dev | API + Static files |
 
 ## Initial Setup
 
 ### Prerequisites
+
 - Node.js 18+ installed
 - Cloudflare Wrangler CLI installed (`npm install -g wrangler`)
 - Git configured with GitHub credentials
 
 ### Setup Steps
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/selffene-cyber/cema.piwisuite.git
@@ -109,26 +188,30 @@ npm install
 npx wrangler login
 ```
 
-5. Run deployment script:
+5. Deploy the Worker:
 ```bash
-./deploy.bat
+cd deployment
+npx wrangler deploy
 ```
 
 ## Directory Structure
 
 ```
 asistente-cema/
-├── src/                 # Worker source code
-│   └── worker.ts       # Cloudflare Worker entry point
-├── functions/          # Cloudflare Pages Functions
+├── src/                    # Worker source code
+│   └── worker.ts         # Cloudflare Worker entry point
+├── functions/            # Cloudflare Pages Functions (legacy)
 │   └── api/
-├── screens/            # React components
-├── utils/              # Utility functions
-├── deployment/         # PWA service worker & assets
-├── dist/               # Build output (generated)
-├── wrangler.toml       # Cloudflare configuration
-├── package.json        # Dependencies & scripts
-└── deploy.bat          # Deployment script (Windows)
+├── screens/              # React components
+├── utils/                # Utility functions
+├── deployment/           # PWA service worker & static assets
+│   ├── index.html        # Main HTML entry point
+│   ├── sw.js             # Service Worker
+│   └── assets/          # Built JS/CSS assets
+├── dist/                 # Build output (legacy, not used)
+├── wrangler.toml         # Cloudflare Worker configuration
+├── package.json          # Dependencies & scripts
+└── deploy.bat           # Deployment script (Windows)
 ```
 
 ## Quick Reference
@@ -137,7 +220,7 @@ asistente-cema/
 |--------|---------|
 | Start development | `npm run dev` |
 | Build for production | `npm run build` |
-| Deploy Worker | `npm run deploy` |
+| Deploy Worker | `cd deployment && npx wrangler deploy` |
 | Deploy to production | `./deploy.bat` |
 | Run Worker locally | `npm run wrangler:dev` |
 | Open D1 Studio | `npm run db:studio` |
@@ -156,6 +239,16 @@ asistente-cema/
 ### Git conflicts
 - Pull latest changes before committing: `git pull origin desarrollo`
 - Resolve conflicts manually, then commit: `git add -A && git commit -m "Resolve: merge conflicts"`
+
+### Worker not serving static files
+- Ensure `ASSETS` binding is defined in `wrangler.toml`
+- Verify static files exist in `deployment/` directory
+- Check worker logs: `npx wrangler logs`
+
+### Custom domain not working
+- Verify domain is configured in Cloudflare Dashboard
+- Check DNS settings for the domain
+- Ensure Worker is assigned to the domain
 
 ## Best Practices
 
