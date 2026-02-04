@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { authApi } from '../utils/api';
 import { User } from '../types';
+import InstallPrompt from '../components/InstallPrompt';
 
 // Audio file path - handle special characters in filename
 const AUDIO_PATH = '/sound/sonido cema loading .mp3';
@@ -63,6 +64,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#f8f9fa]">
       <div className="w-full max-w-md space-y-10 bg-white p-8 lg:p-12 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100">
+        <InstallPrompt />
+        
         <div className="text-center">
           <img
             src="/icon/favicon-96x96.png"
