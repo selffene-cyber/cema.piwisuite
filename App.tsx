@@ -1,10 +1,13 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Evaluation } from './types';
+import { User, Evaluation, Transportador } from './types';
 import Login from './screens/Login';
 import Dashboard from './screens/Dashboard';
 import EvaluationForm from './screens/EvaluationForm';
 import EvaluationDetail from './screens/EvaluationDetail';
+import TransportadorList from './screens/TransportadorList';
+import TransportadorForm from './screens/TransportadorForm';
+import TransportadorDetail from './screens/TransportadorDetail';
 import Home from './screens/Home';
 import ConfigPage from './screens/ConfigPage';
 import Layout from './components/Layout';
@@ -32,6 +35,13 @@ const App: React.FC = () => {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Transportador state
+  const [transportadores, setTransportadores] = useState<Transportador[]>([]);
+  const [selectedTransportadorId, setSelectedTransportadorId] = useState<string | null>(null);
+  const [transportadorView, setTransportadorView] = useState<'list' | 'form' | 'detail'>('list');
+  const [transportadorToEdit, setTransportadorToEdit] = useState<Transportador | null>(null);
+  const [loadingTransportadores, setLoadingTransportadores] = useState(false);
   
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
@@ -176,6 +186,92 @@ const App: React.FC = () => {
     });
   };
 
+  // Transportador functions
+  const fetchTransportadores = useCallback(async () => {
+    try {
+      setLoadingTransportadores(true);
+      // Load from localStorage for now (until API is implemented)
+      const stored = localStorage.getItem('transportadores');
+      const data: Transportador[] = stored ? JSON.parse(stored) : [];
+      setTransportadores(data);
+    } catch (err: any) {
+      console.error('Failed to fetch transportadores:', err);
+      setTransportadores([]);
+    } finally {
+      setLoadingTransportadores(false);
+    }
+  }, []);
+
+  // Fetch transportadores when user is logged in
+  useEffect(() => {
+    if (currentUser) {
+      fetchTransportadores();
+    }
+  }, [currentUser, fetchTransportadores]);
+
+  const saveTransportador = async (transportador: Transportador) => {
+    try {
+      const stored = localStorage.getItem('transportadores');
+      const existing: Transportador[] = stored ? JSON.parse(stored) : [];
+      
+      const existingIndex = existing.findIndex(t => t.id === transportador.id);
+      let updated: Transportador[];
+      
+      if (existingIndex >= 0) {
+        existing[existingIndex] = transportador;
+        updated = [...existing];
+      } else {
+        updated = [...existing, transportador];
+      }
+      
+      localStorage.setItem('transportadores', JSON.stringify(updated));
+      setTransportadores(updated);
+    } catch (err: any) {
+      console.error('Failed to save transportador:', err);
+      throw new Error('Error al guardar transportador: ' + (err.message || String(err)));
+    }
+  };
+
+  const deleteTransportador = async (id: string) => {
+    try {
+      const stored = localStorage.getItem('transportadores');
+      const existing: Transportador[] = stored ? JSON.parse(stored) : [];
+      
+      const filtered = existing.filter(t => t.id !== id);
+      localStorage.setItem('transportadores', JSON.stringify(filtered));
+      setTransportadores(filtered);
+      
+      if (selectedTransportadorId === id) {
+        setTransportadorView('list');
+        setSelectedTransportadorId(null);
+      }
+    } catch (err: any) {
+      console.error('Failed to delete transportador:', err);
+      throw new Error('Error al eliminar transportador: ' + (err.message || String(err)));
+    }
+  };
+
+  const handleDuplicateTransportador = async (id: string) => {
+    const original = transportadores.find(t => t.id === id);
+    if (!original) return;
+    
+    const duplicate: Transportador = {
+      ...original,
+      id: crypto.randomUUID(),
+      identity: {
+        ...original.identity,
+        codigoTransportador: `${original.identity.codigoTransportador}-COPY`,
+        nombreDescriptivo: `${original.identity.nombreDescriptivo} (Copia)`,
+      },
+      estado: 'borrador',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      version: 1,
+    };
+    
+    await saveTransportador(duplicate);
+  };
+
   if (showLoading) {
     return <CEMALoading onFinish={handleLoadingFinish} />;
   }
@@ -212,6 +308,75 @@ const App: React.FC = () => {
       );
     }
 
+    if (activeModule === 'transportadores') {
+      // Detail view
+      if (transportadorView === 'detail' && selectedTransportadorId) {
+        return (
+          <TransportadorDetail
+            transportadorId={selectedTransportadorId}
+            transportadores={transportadores}
+            onBack={() => {
+              setTransportadorView('list');
+              setSelectedTransportadorId(null);
+            }}
+            onEdit={(id) => {
+              const t = transportadores.find(x => x.id === id);
+              setTransportadorToEdit(t || null);
+              setTransportadorView('form');
+            }}
+            onDuplicate={(id) => {
+              handleDuplicateTransportador(id);
+            }}
+            onDelete={(id) => {
+              deleteTransportador(id);
+              setTransportadorView('list');
+            }}
+          />
+        );
+      }
+
+      // Form view (edit/create)
+      if (transportadorView === 'form') {
+        return (
+          <TransportadorForm
+            transportador={transportadorToEdit}
+            onSave={async (t) => {
+              await saveTransportador(t);
+              setTransportadorView('list');
+              setTransportadorToEdit(null);
+            }}
+            onCancel={() => {
+              setTransportadorView('list');
+              setTransportadorToEdit(null);
+            }}
+          />
+        );
+      }
+
+      // List view
+      return (
+        <TransportadorList
+          transportadores={transportadores}
+          onNewTransportador={() => {
+            setTransportadorToEdit(null);
+            setTransportadorView('form');
+          }}
+          onEditTransportador={(id) => {
+            const t = transportadores.find(x => x.id === id);
+            setTransportadorToEdit(t || null);
+            setTransportadorView('form');
+          }}
+          onViewTransportador={(id) => {
+            setSelectedTransportadorId(id);
+            setTransportadorView('detail');
+          }}
+          onDuplicateTransportador={handleDuplicateTransportador}
+          onDeleteTransportador={deleteTransportador}
+          loading={loadingTransportadores}
+        />
+      );
+    }
+
     if (activeModule === 'configuracion') {
       return <ConfigPage user={currentUser} />;
     }
@@ -239,6 +404,8 @@ const App: React.FC = () => {
       setActiveModule={(m) => {
         setActiveModule(m);
         setView('dashboard');
+        setTransportadorView('list');
+        setSelectedTransportadorId(null);
       }} 
       onLogout={handleLogout}
       user={currentUser}

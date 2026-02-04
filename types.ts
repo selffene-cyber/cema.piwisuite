@@ -350,3 +350,554 @@ export type UbicacionTakeUp =
   | 'RETURN - Take-up ubicado en el tramo de retorno. Común en configuraciones con gravedad horizontal.'
   | 'INTERMEDIATE - Take-up ubicado en una posición intermedia del transportador. Usado en sistemas largos o especiales.';
 
+// =============================================================================
+// ETAPA 1: TIPOS BASE Y ENUMS PARA MAESTRO DE TRANSPORTADORES (CEMA)
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// 1. ENUMS DE CONFIGURACIÓN GENERAL DEL TRANSPORTADOR
+// -----------------------------------------------------------------------------
+
+/**
+ * Tipo de equipo transportador según su configuración mecánica.
+ * Clasificación basada en las configuraciones típicas según CEMA.
+ */
+export enum TipoEquipo {
+  TRANSPORTADOR_CONVENCIONAL = 'TRANSPORTADOR_CONVENCIONAL',
+  ALIMENTADOR_BANDA = 'ALIMENTADOR_BANDA',
+  TRANSPORTADOR_REVERSIBLE = 'TRANSPORTADOR_REVERSIBLE',
+  TRANSPORTADOR_CURVO = 'TRANSPORTADOR_CURVO',
+  TRANSPORTADOR_INCLINADO_FUERTE = 'TRANSPORTADOR_INCLINADO_FUERTE',
+  PIPE_TUBULAR = 'PIPE_TUBULAR'
+}
+
+/**
+ * Perfil geométrico del transportador.
+ * Define la disposición espacial del sistema.
+ */
+export enum Perfil {
+  HORIZONTAL = 'HORIZONTAL',
+  INCLINADO = 'INCLINADO',
+  MIXTO = 'MIXTO'
+}
+
+/**
+ * Régimen de operación del transportador.
+ * Define el patrón temporal de funcionamiento.
+ */
+export enum RegimenOperacion {
+  CONTINUO = 'CONTINUO',
+  INTERMITENTE = 'INTERMITENTE',
+  CAMPAÑA = 'CAMPAÑA'
+}
+
+// -----------------------------------------------------------------------------
+// 2. ENUMS DE CUBIERTAS DE CORREA (CEMA Steel Cord Ratings)
+// -----------------------------------------------------------------------------
+
+/**
+ * Grado de cubierta superior según clasificación CEMA para correas con cables de acero.
+ * Clasificación basada en resistencia a abrasión según estándar CEMA.
+ * Nota: Renombrado para evitar conflicto con TipoCubiertaSuperior existente.
+ */
+export enum GradoCubiertaST {
+  ST20 = 'ST20',
+  ST25 = 'ST25',
+  ST30 = 'ST30',
+  ST40 = 'ST40',
+  ST50 = 'ST50',
+  ST60 = 'ST60',
+  ST70 = 'ST70',
+  ST80 = 'ST80',
+  ST100 = 'ST100',
+  ST125 = 'ST125',
+  ST150 = 'ST150',
+  ST180 = 'ST180',
+  ST200 = 'ST200',
+  ST250 = 'ST250',
+  ST300 = 'ST300',
+  ST400 = 'ST400',
+  ST500 = 'ST500',
+  ST540 = 'ST540',
+  ST560 = 'ST560',
+  ST630 = 'ST630',
+  ST650 = 'ST650',
+  ST700 = 'ST700',
+  ST750 = 'ST750',
+  ST800 = 'ST800',
+  ST900 = 'ST900',
+  ST1000 = 'ST1000',
+  ST1250 = 'ST1250',
+  ST1400 = 'ST1400',
+  ST1600 = 'ST1600',
+  ST1800 = 'ST1800',
+  ST2000 = 'ST2000',
+  ST2500 = 'ST2500',
+  ST3000 = 'ST3000',
+  ST3500 = 'ST3500',
+  ST4000 = 'ST4000',
+  ST4500 = 'ST4500',
+  ST5000 = 'ST5000'
+}
+
+/**
+ * Espesor de cubierta inferior según clasificación métrica.
+ * Clasificación basada en espesor de cubierta en milímetros.
+ * Nota: Renombrado para evitar conflicto con TipoCubiertaInferior existente.
+ */
+export enum EspesorCubiertaMetrico {
+  M1 = 'M1 (3mm)',
+  M2 = 'M2 (5mm)',
+  M3 = 'M3 (6mm)',
+  M4 = 'M4 (8mm)',
+  M5 = 'M5 (10mm)',
+  M6 = 'M6 (12mm)',
+  M7 = 'M7 (15mm)',
+  M8 = 'M8 (18mm)',
+  M9 = 'M9 (20mm)',
+  M10 = 'M10 (25mm)'
+}
+
+/**
+ * Clase CEMA para polines de carga.
+ * Clasificación según CEMA Book 7ª edición - Capítulo 4 (Idlers).
+ * Define la capacidad de carga y aplicación del polín.
+ */
+export enum ClaseCEMA {
+  A = 'A',  // Servicio ligero - CEMA Class A
+  B = 'B',  // Servicio ligero a mediano - CEMA Class B
+  C = 'C',  // Servicio mediano - CEMA Class C
+  D = 'D',  // Servicio mediano a pesado - CEMA Class D
+  E = 'E',  // Servicio pesado - CEMA Class E
+  F = 'F',  // Servicio muy pesado - CEMA Class F
+  G = 'G',  // Servicio extremo - CEMA Class G
+  H = 'H'   // Servicio máximo - CEMA Class H
+}
+
+// -----------------------------------------------------------------------------
+// 3. ENUMS DE TAMBORES
+// -----------------------------------------------------------------------------
+
+/**
+ * Tipo de tambor según su función en el transportador.
+ * Clasificación según CEMA Book 7ª edición.
+ */
+export enum TipoTambor {
+  DRIVE = 'DRIVE',         // Tambor motriz - Transmite la fuerza motriz a la correa
+  TAIL = 'TAIL',           // Tambor de cola - Punto de retorno de la correa
+  SNUB = 'SNUB',           // Tambor deflector - Cambia el ángulo de tensión
+  BEND = 'BEND',           // Tambor de curva - Cambia dirección de la correa
+  TAKEUP = 'TAKEUP',       // Tambor de take-up - Proporciona tensión
+  DEFLECTOR = 'DEFLECTOR'  // Tambor deflector - Desvia la correa
+}
+
+/**
+ * Tipo de revestimiento de tambor.
+ * Define el material de recubrimiento del tambor.
+ */
+export enum Revestimiento {
+  NONE = 'NONE',
+  RUBBER_PLAIN = 'RUBBER_PLAIN',
+  RUBBER_GROOVED = 'RUBBER_GROOVED',
+  CERAMIC = 'CERAMIC'
+}
+
+/**
+ * Tipo de eje de tambor.
+ * Define la geometría del eje según aplicación.
+ */
+export enum TipoEje {
+  STRAIGHT = 'STRAIGHT',     // Eje recto - Aplicación estándar
+  STEPPED = 'STEPPED',       // Eje escalonado - Para diferentes диаметры
+  TAPERED = 'TAPERED'        // Eje cónico - Para cargas axiales
+}
+
+// -----------------------------------------------------------------------------
+// 4. ENUMS DE PROBLEMAS OPERACIONALES
+// -----------------------------------------------------------------------------
+
+/**
+ * Nivel de carryback (material pegajoso en retorno).
+ * Clasificación según severidad CEMA.
+ */
+export enum NivelCarryback {
+  LEVEL_I = 'LEVEL_I',  // Mínimo - Sin acumulación significativa
+  LEVEL_II = 'LEVEL_II', // Leve - Acumulación controlada
+  LEVEL_III = 'LEVEL_III', // Moderado - Requiere atención
+  LEVEL_IV = 'LEVEL_IV'   // Severo - Afecta operación
+}
+
+// -----------------------------------------------------------------------------
+// 5. ENUMS DE SISTEMA DE LIMPIEZA
+// -----------------------------------------------------------------------------
+
+/**
+ * Tipo de limpieza de correa.
+ */
+export enum TipoLimpieza {
+  PRIMARY = 'PRIMARY',
+  SECONDARY = 'SECONDARY'
+}
+
+/**
+ * Zona de instalación de componentes.
+ */
+export enum ZonaInstalacion {
+  HEAD = 'HEAD',
+  TAIL = 'TAIL',
+  RETURN = 'RETURN',
+  CARGO = 'CARGO'
+}
+
+// -----------------------------------------------------------------------------
+// 6. ENUMS DE ZONA DE CARGA
+// -----------------------------------------------------------------------------
+
+/**
+ * Tipo de cama de impacto.
+ */
+export enum TipoCamaImpacto {
+  IMPACT_IDLER_SET = 'IMPACT_IDLER_SET',
+  SLIDER_BED = 'SLIDER_BED',
+  IMPACT_CRADLE = 'IMPACT_CRADLE',
+  IMPACT_CRADLE_WITH_CENTER_ROLL = 'IMPACT_CRADLE_WITH_CENTER_ROLL',
+  NO_IMPACT_PROTECTION = 'NO_IMPACT_PROTECTION'
+}
+
+/**
+ * Tipo de descarga del material.
+ */
+export enum TipoDescarga {
+  CENTRAL = 'CENTRAL',
+  DESVIADA = 'DESVIADA',
+  CASCADA = 'CASCADA'
+}
+
+// -----------------------------------------------------------------------------
+// 7. ENUMS DE FUENTE DE DATOS
+// -----------------------------------------------------------------------------
+
+/**
+ * Fuente del dato de medición.
+ */
+export enum FuenteDato {
+  MEDIDO = 'MEDIDO',
+  ESTIMADO = 'ESTIMADO',
+  DESCONOCIDO = 'DESCONOCIDO'
+}
+
+// -----------------------------------------------------------------------------
+// 8. TIPOS COMPUESTOS
+// -----------------------------------------------------------------------------
+
+/**
+ * Dato de medición con metadatos.
+ * Para manejar datos con estado y trazabilidad.
+ */
+export interface DatoMedicion<T> {
+  valor: T;
+  fuente: FuenteDato;
+  fecha?: string;
+  observaciones?: string;
+}
+
+/**
+ * Configuración del sistema take-up.
+ */
+export interface TakeUp {
+  tipoTakeUp: TipoTakeUp;
+  ubicacionTakeUp: UbicacionTakeUp;
+  carreraDisponible_m: number;
+}
+
+/**
+ * Configuración de polín de carga.
+ */
+export interface PolinCarga {
+  anguloArtesa: number;
+  claseCEMA: ClaseCEMA;
+  diametroRodillo_mm: number;
+  espaciamiento_m: number;
+  tipo: TipoPolinCarga;
+}
+
+/**
+ * Configuración de polín de retorno.
+ */
+export interface PolinRetorno {
+  tipo: TipoRetorno;
+  espaciamiento_m: number;
+  diametroRodillo_mm: number;
+}
+
+/**
+ * Configuración de tambor.
+ */
+export interface Tambor {
+  tipo: TipoTambor;
+  diametro_mm: number;
+  ancho_mm: number;
+  revestimiento: Revestimiento;
+  tipoEje: TipoEje;
+}
+
+/**
+ * Configuración de zona de carga.
+ */
+export interface ZonaCarga {
+  alturaCaidaDiseno_m: number;
+  alturaCaidaReal_m: number;
+  tipoDescarga: TipoDescarga;
+  tamanoLumpMax_mm: number;
+  camaImpacto: boolean;
+  tipoCamaImpacto?: TipoCamaImpacto;
+  largoCamaImpacto_m?: number;
+}
+
+/**
+ * Sistema de limpieza de correa.
+ */
+export interface SistemaLimpieza {
+  limpiezaPrimaria: boolean;
+  limpiezaSecundaria: boolean;
+  tipolimpieza?: string;
+  zonaInstalacion?: ZonaInstalacion;
+}
+
+/**
+ * Problemas operacionales del transportador.
+ */
+export interface ProblemasOperacionales {
+  carryback: NivelCarryback;
+  derrames: NivelDerrames;
+  acumulacionRetorno: NivelAcumulacionRetorno;
+}
+
+/**
+ * Sistema de accionamiento del transportador.
+ */
+export interface Accionamiento {
+  potenciaInstalada_kW: number;
+  numMotores: number;
+  tipoArranque: TipoArranque;
+  reductor: string;
+  backstop: boolean;
+  freno: boolean;
+}
+
+// =============================================================================
+// ETAPA 2: IDENTIDAD Y CONTEXTO DEL TRANSPORTADOR
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// 1. FUENTE DE LEVANTAMIENTO (Sección 13)
+// -----------------------------------------------------------------------------
+
+export type FuenteLevantamiento =
+  | 'levantamiento_campo'
+  | 'datos_proyecto'
+  | 'revision_dibujo'
+  | 'especificacion_tecnica'
+  | 'otro';
+
+// -----------------------------------------------------------------------------
+// 2. INTERFAZ DE IDENTIDAD DEL TRANSPORTADOR (Sección 1)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorIdentity {
+  // Identificación (sección 1.1)
+  cliente: ClienteIndustrial | '';
+  clienteNombre?: string; // Nombre descriptivo del cliente
+  faena: string;
+  area: string;
+  codigoTransportador: string;
+  nombreDescriptivo: string;
+  tipoEquipo: TipoEquipo;
+  
+  // Metadatos (sección 13)
+  fechaLevantamiento: string;
+  usuario: string;
+  fuenteDato: FuenteLevantamiento;
+  nivelConfianza: number; // 0-100
+  comentarios?: string;
+}
+
+// Estado del registro del transportador
+export type RegistroEstado =
+  | 'borrador'
+  | 'completo'
+  | 'validado'
+  | 'archivado';
+
+// =============================================================================
+// ETAPA 3: GEOMETRÍA, MATERIAL Y CAPACIDAD DEL TRANSPORTADOR
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// 1. INTERFAZ DE GEOMETRÍA DEL TRANSPORTADOR (Sección 2)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorGeometria {
+  // Dimensiones principales (2.1)
+  longitudTotal_m: number;
+  elevacionTotal_m: number;  // positivo = ascendente, negativo = descendente
+  inclinacionPromedio_grados: number;
+  anchoBanda_mm: number;
+  velocidadNominal_ms: number;
+  
+  // Perfil (2.2)
+  perfil: Perfil;
+  numTramosInclinados: number;
+  tramosInclinados?: number[];  // longitudes en metros
+  tramosHorizontal?: number[];  // longitudes en metros
+}
+
+// -----------------------------------------------------------------------------
+// 2. INTERFAZ DE MATERIAL TRANSPORTADO (Sección 3)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorMaterial {
+  // Propiedades principales (3.1)
+  material: string;  // Usar MaterialSelectorModal existente
+  materialNombre?: string; // Nombre descriptivo del material
+  densidadAparante_tm3: number;
+  tamanoMaxParticula_mm: number;
+  tamanoMedio_mm: number;
+  humedad: Moisture;
+  fluidez: 'libre' | 'media' | 'pobre';
+  abrasividad: Abrasiveness;
+}
+
+// -----------------------------------------------------------------------------
+// 3. INTERFAZ DE CAPACIDAD DEL TRANSPORTADOR (Sección 4)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorCapacidad {
+  // Producción (4.1)
+  capacidadNominal_th: number;
+  capacidadMaxima_th: number;
+  factorLlenado_pct: number;
+  regimenOperacion: RegimenOperacion;
+}
+
+// Interface principal del transportador (combinada)
+export interface Transportador {
+  id: string;
+  identity: TransportadorIdentity;
+  geometria?: TransportadorGeometria;
+  material?: TransportadorMaterial;
+  capacidad?: TransportadorCapacidad;
+  correa?: TransportadorCorrea;
+  polines?: TransportadorPolines;
+  zonaCarga?: TransportadorZonaCarga;
+  limpieza?: TransportadorLimpieza;
+  tambores?: TransportadorTambores;
+  accionamiento?: TransportadorAccionamiento;
+  takeUp?: TransportadorTakeUp;
+  curvas?: TransportadorCurvas;
+  estado: RegistroEstado;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+// =============================================================================
+// ETAPA 4: COMPONENTES TÉCNICOS DEL TRANSPORTADOR
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// 5. INTERFAZ DE CORREA DEL TRANSPORTADOR (Sección 5)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorCorrea {
+  // Construcción (5.1)
+  tipo: 'EP' | 'ST';
+  resistenciaNominal_kNm: number;
+  numTelasCables: number;
+  tipoCubiertaSuperior: string;
+  tipoCubiertaInferior: string;
+  espesorCubiertaSup_mm: number;
+  espesorCubiertaInf_mm: number;
+  
+  // Empalme (5.2)
+  tipoEmpalme: SpliceType;
+  longitudEmpalme_mm: number;
+}
+
+// -----------------------------------------------------------------------------
+// 6. INTERFAZ DE POLINES DEL TRANSPORTADOR (Sección 6)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorPolines {
+  // Polines de carga (6.1)
+  polinesCarga: PolinCarga[];
+  
+  // Polines de retorno (6.2)
+  polinesRetorno: PolinRetorno[];
+}
+
+// -----------------------------------------------------------------------------
+// 7. INTERFAZ DE ZONA DE CARGA DEL TRANSPORTADOR (Sección 7)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorZonaCarga {
+  // Geometría de carga (7.1)
+  numZonasCarga: number;
+  zonas: ZonaCarga[];
+}
+
+// -----------------------------------------------------------------------------
+// 8. INTERFAZ DE LIMPIEZA DEL TRANSPORTADOR (Sección 8)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorLimpieza {
+  // Limpieza (8.1)
+  limpiezaPrimaria: boolean;
+  limpiezaSecundaria: boolean;
+  tipoLimpiador?: string;
+  zonaInstalacion?: ZonaInstalacion;
+  
+  // Problemas operacionales (8.2)
+  problemas: ProblemasOperacionales;
+}
+
+// -----------------------------------------------------------------------------
+// 9. INTERFAZ DE TAMBORES DEL TRANSPORTADOR (Sección 9)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorTambores {
+  tambores: Tambor[];
+}
+
+// -----------------------------------------------------------------------------
+// 10. INTERFAZ DE ACCIONAMIENTO DEL TRANSPORTADOR (Sección 10)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorAccionamiento {
+  potenciaInstalada_kW: number;
+  numMotores: number;
+  tipoArranque: TipoArranque;
+  reductor: string;
+  backstop: boolean;
+  freno: boolean;
+}
+
+// -----------------------------------------------------------------------------
+// 11. INTERFAZ DE TAKE-UP DEL TRANSPORTADOR (Sección 11)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorTakeUp {
+  takeUp: TakeUp;
+}
+
+// -----------------------------------------------------------------------------
+// 12. INTERFAZ DE CURVAS DEL TRANSPORTADOR (Sección 12)
+// -----------------------------------------------------------------------------
+
+export interface TransportadorCurvas {
+  curvasHorizontales: boolean;
+  radioHorizontal_m: number;
+  curvasVerticales: boolean;
+  radioVertical_m: number;
+}
+

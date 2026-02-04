@@ -15,6 +15,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, onLogout, activeModule
   const menuItems = [
     { id: 'home', label: 'INICIO' },
     { id: 'cema576', label: 'CEMA 576' },
+    { id: 'transportadores', label: 'TRANSPORTADORES' },
     { id: 'impact', label: 'IMPACTO' },
     { id: 'calc1', label: 'CALCULADORA' },
     { id: 'configuracion', label: 'CONFIGURACIÓN' },
