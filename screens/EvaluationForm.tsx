@@ -1,5 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import ClienteSelectorModal from '../components/ClienteSelectorModal';
+import MaterialSelectorModal from '../components/MaterialSelectorModal';
 import { SpliceType, Abrasiveness, Moisture, Evaluation, TipoCorrea, Capacidad, TipoMaterial, ClienteIndustrial, AnchoUnidad, VelocidadUnidad } from '../types';
 import { calculateScores, convertBeltWidthToInches, convertBeltSpeedToFPM, getBeltWidthScore, getBeltSpeedScore, getAbrasivenessScore, getMoistureScore, getSpliceTypeScore } from '../utils/calculator';
 import { generateEvaluationPDF } from '../utils/pdfGenerator';
@@ -23,172 +25,6 @@ ChartJS.register(
   Legend
 );
 
-const CLIENTE_LABELS: Record<ClienteIndustrial, string> = {
-  'colbun': 'Colbún',
-  'codelco_andina': 'Codelco Andina',
-  'codelco_chuquicamata': 'Codelco Chuquicamata',
-  'codelco_el_teniente': 'Codelco El Teniente',
-  'codelco_radomiro_tomic': 'Codelco Radomiro Tomic',
-  'codelco_ministro_hales': 'Codelco Ministro Hales',
-  'codelco_gabriela_mistral': 'Codelco Gabriela Mistral',
-  'codelco_el_salvador': 'Codelco El Salvador',
-  'bhp_escondida': 'BHP Escondida',
-  'bhp_spence': 'BHP Spence',
-  'los_pelambres': 'Los Pelambres',
-  'centinela': 'Centinela',
-  'antucoya': 'Antucoya',
-  'zaldivar': 'Zaldívar',
-  'los_bronces': 'Los Bronces',
-  'collahuasi': 'Collahuasi',
-  'el_abra': 'El Abra',
-  'candelaria': 'Candelaria',
-  'caserones': 'Caserones',
-  'quebrada_blanca': 'Quebrada Blanca',
-  'carmen_andacollo': 'Carmen de Andacollo',
-  'la_coipa': 'La Coipa',
-  'mantoverde': 'Mantoverde',
-  'minera_carola': 'Minera Carola',
-  'atacama_kozan': 'Atacama Kozan',
-  'punta_del_cobre': 'Punta del Cobre',
-  'granate': 'Granate',
-  'atacama_minerals': 'Atacama Minerals',
-  'tres_valles': 'Tres Valles',
-  'sierra_gorda': 'Sierra Gorda',
-  'cerro_negro_norte': 'Cerro Negro Norte',
-  'el_romeral': 'El Romeral',
-  'los_colorados': 'Los Colorados',
-  'puerto_punta_totoralillo': 'Puerto Punta Totoralillo',
-  'minera_del_pacifico': 'Minera del Pacífico',
-  'santa_barbara': 'Santa Bárbara',
-  'sqm': 'SQM',
-  'albemarle': 'Albemarle',
-  'guacolda': 'Guacolda',
-  'engie': 'Engie',
-  'aes_andes': 'AES Andes',
-  'enel': 'Enel',
-  'arauco': 'Arauco',
-  'cmpc': 'CMPC',
-  'cementos_bio_bio': 'Cementos Bío Bío',
-  'melon': 'Melón',
-  'polpaico': 'Polpaico',
-  'calera_san_antonio': 'Calera San Antonio',
-  'calderas_chile': 'Calderas Chile',
-  'puerto_ventanas': 'Puerto Ventanas',
-  'puerto_angamos': 'Puerto Angamos',
-  'puerto_mejillones': 'Puerto Mejillones',
-  'terminal_puerto_coquimbo': 'Terminal Puerto Coquimbo',
-  'tps_valparaiso': 'TPS Valparaíso',
-  'aguas_cap': 'Aguas CAP',
-  'aguas_antofagasta': 'Aguas Antofagasta',
-  'hmc': 'HMC',
-  'cemin': 'CEMIN',
-  'otro': 'Otro',
-};
-
-const TIPO_MATERIAL_VALUES: TipoMaterial[] = [
-  // Minerales Metálicos
-  'Minerales Metálicos (ROM, concentrados y productos intermedios)',
-  'Mineral de Cobre (ROM / Crudo)',
-  'Concentrado de Cobre',
-  'Mineral de Cobre Sulfurado',
-  'Mineral de Cobre Oxidado',
-  'Ripios de Lixiviación',
-  'Mineral de Oro (ROM)',
-  'Concentrado de Oro',
-  'Relave de Oro',
-  'Mineral de Plata',
-  'Mineral de Zinc',
-  'Mineral de Plomo',
-  'Mineral de Molibdeno',
-  'Mineral de Hierro',
-  'Concentrado de Hierro',
-  'Pellets de Hierro',
-  'Finos de Hierro',
-  'Sinter Feed',
-  'Mineral de Manganeso',
-  'Mineral de Níquel',
-  'Mineral Polimetálico',
-  // Minerales Energéticos
-  'Carbón Térmico',
-  'Carbón Metalúrgico',
-  'Carbón Pulverizado',
-  'Coque',
-  'Petcoke',
-  'Biomasa Industrial (general)',
-  'Biomasa Forestal',
-  'Astillas de Madera',
-  'Chips de Madera',
-  'Bagazo',
-  'Residuos Orgánicos Secos (RDF/SRF)',
-  // Minerales No Metálicos / Construcción
-  'Caliza',
-  'Caliza Triturada',
-  'Cal Viva',
-  'Cal Hidratada',
-  'Dolomita',
-  'Yeso',
-  'Caolín',
-  'Feldespato',
-  'Arena Silícea',
-  'Grava',
-  'Áridos',
-  'Agregados',
-  'Hormig\u00f3n Seco (premezcla)',
-  'Bentonita',
-  'Baritina',
-  // Cemento y Procesos Industriales
-  'Clinker de Cemento',
-  'Crudo de Cemento (Raw Meal)',
-  'Cemento Portland',
-  'Polvo de Cemento',
-  'Harina Cruda',
-  'Material de Retorno (Bypass)',
-  'Polvos de Filtro / CKD',
-  'Escoria de Alto Horno',
-  'Escoria Granulada',
-  // Sales, Litio y Químicos Sólidos
-  'Sal Gruesa',
-  'Sal Fina',
-  'Sal Industrial',
-  'Cloruro de Sodio',
-  'Nitrato de Sodio',
-  'Sulfato de Sodio',
-  'Carbonato de Litio',
-  'Hidróxido de Litio',
-  'Sales de Litio (generales)',
-  'Boratos',
-  'Sulfatos',
-  'Fertilizantes Granulados',
-  'Fertilizantes en Polvo',
-  // Relaves, Residuos y Subproductos
-  'Relave de Cobre',
-  'Relave de Oro',
-  'Relave Espesado',
-  'Relave Filtrado',
-  'Polvos Industriales',
-  'Cenizas Volantes',
-  'Cenizas de Fondo',
-  'Escorias',
-  'Residuos Mineros Secos',
-  'Residuos Industriales Sólidos',
-  // Graneles y Logística Portuaria
-  'Concentrado Mineral (genérico)',
-  'Granel Sólido Mineral',
-  'Granel Industrial',
-  'Granel Abrasivo',
-  'Granel Húmedo',
-  'Granel Seco',
-  'Stockpile Material',
-  'Material de Transferencia Portuaria',
-  // Otros
-  'Material Mixto',
-  'Material Abrasivo Especial',
-  'Material Pegajoso',
-  'Material Húmedo',
-  'Otro (especificar manualmente)',
-];
-
-
 interface EvaluationFormProps {
   onSave: (evalItem: Evaluation) => void;
   onCancel: () => void;
@@ -196,6 +32,8 @@ interface EvaluationFormProps {
 }
 
 const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel, onSaveComplete }) => {
+  const [showClienteModal, setShowClienteModal] = useState(false);
+  const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [formData, setFormData] = useState({
     clientName: '',
     clientId: '' as ClienteIndustrial | '',
@@ -295,24 +133,26 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel, onSav
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2.5">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] ml-1">Cliente / Unidad de Negocio</label>
-              <select
-                className="w-full bg-gray-50/50 border-gray-100 text-[13px] font-bold py-4 rounded-xl px-5"
-                value={formData.clientId}
-                onChange={e => { 
-                  const selectedId = e.target.value as ClienteIndustrial;
-                  setFormData({
-                    ...formData, 
-                    clientId: selectedId,
-                    clientName: selectedId ? CLIENTE_LABELS[selectedId] : ''
-                  }); 
-                  setResult(null);
-                }}
+              <button
+                type="button"
+                onClick={() => setShowClienteModal(true)}
+                className="w-full bg-gray-50/50 border border-gray-100 text-[13px] font-bold py-4 rounded-xl px-5 text-left hover:bg-gray-100 transition-all"
               >
-                <option value="">Seleccionar cliente...</option>
-                {Object.entries(CLIENTE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
+                {formData.clientName || "Seleccionar cliente..."}
+              </button>
+
+              {showClienteModal && (
+                <ClienteSelectorModal
+                  open={showClienteModal}
+                  onClose={() => setShowClienteModal(false)}
+                  currentClient={formData.clientId}
+                  onSelect={(id, name) => {
+                    setFormData({ ...formData, clientId: id, clientName: name });
+                    setShowClienteModal(false);
+                    setResult(null);
+                  }}
+                />
+              )}
             </div>
             <div className="space-y-2.5">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] ml-1">Código de Activo (TAG)</label>
@@ -505,17 +345,29 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel, onSav
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] ml-1">Tipo de Material</label>
-              <select
-                className="w-full bg-gray-50/50 border-gray-100 text-[13px] font-bold py-4 rounded-xl px-5 cursor-pointer"
-                value={formData.tipo_material}
-                onChange={e => { setFormData({...formData, tipo_material: e.target.value as TipoMaterial}); setResult(null); updateLiveScores(); }}
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] ml-1">
+                Tipo de Material
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowMaterialModal(true)}
+                className="w-full bg-gray-50/50 border border-gray-100 text-[13px] font-bold py-4 rounded-xl px-5 text-left hover:bg-gray-100 transition-all"
               >
-                <option value="">Seleccionar material...</option>
-                {TIPO_MATERIAL_VALUES.map(v => (
-                  <option key={v} value={v}>{v.length > 50 ? v.substring(0, 50) + '...' : v}</option>
-                ))}
-              </select>
+                {formData.tipo_material || "Seleccionar material..."}
+              </button>
+
+              {showMaterialModal && (
+                <MaterialSelectorModal
+                  open={showMaterialModal}
+                  onClose={() => setShowMaterialModal(false)}
+                  currentMaterial={formData.tipo_material}
+                  onSelect={(id, nombre) => {
+                    setFormData({ ...formData, tipo_material: nombre });
+                    setShowMaterialModal(false);
+                    setResult(null);
+                  }}
+                />
+              )}
             </div>
             <div className="space-y-2.5">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] ml-1">Nivel de Abrasividad</label>

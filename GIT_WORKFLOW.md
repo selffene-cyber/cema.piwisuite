@@ -102,11 +102,57 @@ The deployment script performs the following steps:
 1. **Git Configuration** - Sets up Git for consistent line endings
 2. **Branch Check** - Ensures you're on the `desarrollo` branch
 3. **Pull Changes** - Gets latest changes from GitHub
-4. **Commit** - Prompts for commit message and commits all changes
+4. **TypeScript Check** - Runs `npx tsc --noEmit` to detect errors
 5. **Build** - Runs `npm run build` to build the frontend
-6. **Deploy** - Runs deployment scripts for Worker
-7. **Merge** - Merges `desarrollo` into `main`
-8. **Push** - Pushes both branches to GitHub
+6. **Deploy** - Deploys Worker from `deployment/` directory
+7. **Stage Changes** - Stages all changes with `git add -A`
+8. **Commit** - Prompts for commit message and commits
+9. **Merge** - Merges `desarrollo` into `main`
+10. **Push** - Pushes both branches to GitHub
+
+### Usage
+
+```batch
+# Full deployment
+deploy.bat
+
+# Dry run (preview what would happen)
+deploy.bat --dry-run
+
+# Show help
+deploy.bat --help
+```
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| TypeScript checking | Validates code before building |
+| Color-coded output | Easy-to-read status messages |
+| Progress indicators | Step-by-step progress tracking |
+| Error handling | Detailed suggestions for fixes |
+| Confirmation prompts | Safety checks before critical actions |
+| Dry-run mode | Preview deployment without changes |
+
+### Confirmation Prompts
+
+The script will ask for confirmation before:
+- Switching branches
+- Committing changes
+- Merging and pushing to production
+
+### Dry-Run Mode
+
+Use `--dry-run` to see what the script would do without making any changes:
+
+```batch
+deploy.bat --dry-run
+```
+
+This is useful for:
+- Reviewing changes before deploying
+- Testing the script in a safe environment
+- Understanding the deployment workflow
 
 ## Cloudflare Deployment
 
@@ -221,7 +267,8 @@ asistente-cema/
 | Start development | `npm run dev` |
 | Build for production | `npm run build` |
 | Deploy Worker | `cd deployment && npx wrangler deploy` |
-| Deploy to production | `./deploy.bat` |
+| Deploy to production | `deploy.bat` |
+| Deploy (dry-run) | `deploy.bat --dry-run` |
 | Run Worker locally | `npm run wrangler:dev` |
 | Open D1 Studio | `npm run db:studio` |
 
