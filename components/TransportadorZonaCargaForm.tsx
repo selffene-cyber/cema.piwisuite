@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { TransportadorZonaCarga, ZonaCarga, TipoCamaImpacto, TipoDescarga } from '../types';
+import { TransportadorZonaCarga, ZonaCarga, TipoCamaImpacto, TipoDescarga, LargoZonaImpactoUnidad } from '../types';
 
 interface TransportadorZonaCargaFormProps {
   zonaCarga: TransportadorZonaCarga;
   onChange: (zonaCarga: TransportadorZonaCarga) => void;
 }
 
-const TIPO_CAMA_IMPACTO_OPCIONES = ['IMPACT_IDLER_SET', 'SLIDER_BED', 'IMPACT_CRADLE', 'IMPACT_CRADLE_WITH_CENTER_ROLL', 'NO_IMPACT_PROTECTION'];
+const TIPO_CAMA_IMPACTO_OPCIONES = Object.values(TipoCamaImpacto);
 const TIPO_DESCARGA_OPCIONES = ['CENTRAL', 'DESVIADA', 'CASCADA'];
+const LARGO_ZONA_IMPACTO_UNIDADES = Object.values(LargoZonaImpactoUnidad);
 
 const createEmptyZonaCarga = (): ZonaCarga => ({
   alturaCaidaDiseno_m: 1.0,
@@ -16,6 +17,12 @@ const createEmptyZonaCarga = (): ZonaCarga => ({
   tipoDescarga: 'CENTRAL' as TipoDescarga,
   tamanoLumpMax_mm: 100,
   camaImpacto: false,
+  largoZonaImpacto: 0,
+  largoZonaImpactoUnidad: LargoZonaImpactoUnidad.MM,
+  numPolinesImpacto: 0,
+  largoCamaDeslizante: 0,
+  numEstaciones: 0,
+  marcaFabricante: '',
 });
 
 const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
@@ -25,14 +32,18 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
   const handleChange = (field: keyof TransportadorZonaCarga, value: any) => {
     onChange({
       ...zonaCarga,
+      zonas: zonaCarga.zonas || [],  // Asegurar que zonas exista
       [field]: value,
     });
   };
 
   const agregarZona = () => {
     const nuevas = [...(zonaCarga.zonas || []), createEmptyZonaCarga()];
-    handleChange('zonas', nuevas);
-    handleChange('numZonasCarga', nuevas.length);
+    onChange({
+      ...zonaCarga,
+      zonas: nuevas,
+      numZonasCarga: nuevas.length,
+    });
   };
 
   const actualizarZona = (index: number, field: keyof ZonaCarga, value: any) => {
@@ -43,8 +54,21 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
 
   const eliminarZona = (index: number) => {
     const nuevas = zonaCarga.zonas?.filter((_, i) => i !== index) || [];
-    handleChange('zonas', nuevas);
-    handleChange('numZonasCarga', nuevas.length);
+    onChange({
+      ...zonaCarga,
+      zonas: nuevas,
+      numZonasCarga: nuevas.length,
+    });
+  };
+
+  // Helper to check if tipoCamaImpacto is not NO_IMPACT_PROTECTION
+  const showMarcaFabricante = (tipo?: TipoCamaImpacto) => {
+    return tipo && tipo !== TipoCamaImpacto.NO_IMPACT_PROTECTION;
+  };
+
+  // Helper to get display name for enum values
+  const getDisplayName = (value: string) => {
+    return value.split(' - ')[0].replace(/_/g, ' ');
   };
 
   return (
@@ -205,12 +229,115 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
                       >
                         <option value="">Seleccionar...</option>
                         {TIPO_CAMA_IMPACTO_OPCIONES.map(tipo => (
-                          <option key={tipo} value={tipo}>{tipo.replace(/_/g, ' ')}</option>
+                          <option key={tipo} value={tipo}>{getDisplayName(tipo)}</option>
                         ))}
                       </select>
                     </div>
                   )}
                 </div>
+
+                {/* Campos dinámicos de Cama de Impacto */}
+                {zona.camaImpacto && zona.tipoCamaImpacto && (
+                  <>
+                    {/* Largo Zona de Impacto con unidad */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase">
+                          Largo Zona de Impacto
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            value={zona.largoZonaImpacto || 0}
+                            onChange={(e) => actualizarZona(index, 'largoZonaImpacto', parseFloat(e.target.value) || 0)}
+                            className="flex-1 px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
+                          />
+                          <select
+                            value={zona.largoZonaImpactoUnidad || 'mm'}
+                            onChange={(e) => actualizarZona(index, 'largoZonaImpactoUnidad', e.target.value as LargoZonaImpactoUnidad)}
+                            className="w-24 px-2 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none cursor-pointer"
+                          >
+                            {LARGO_ZONA_IMPACTO_UNIDADES.map(unidad => (
+                              <option key={unidad} value={unidad}>{unidad}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Campos dinámicos según tipo de cama de impacto */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Número de Polines de Impacto - solo para IMPACT_IDLER_SET */}
+                      {zona.tipoCamaImpacto === TipoCamaImpacto.IMPACT_IDLER_SET && (
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+                            Número de Polines de Impacto
+                          </label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            value={zona.numPolinesImpacto || 0}
+                            onChange={(e) => actualizarZona(index, 'numPolinesImpacto', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
+                          />
+                        </div>
+                      )}
+
+                      {/* Largo Cama Deslizante - solo para SLIDER_BED */}
+                      {zona.tipoCamaImpacto === TipoCamaImpacto.SLIDER_BED && (
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+                            Largo Cama Deslizante (mm)
+                          </label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            value={zona.largoCamaDeslizante || 0}
+                            onChange={(e) => actualizarZona(index, 'largoCamaDeslizante', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
+                          />
+                        </div>
+                      )}
+
+                      {/* Número de Estaciones - solo para IMPACT_CRADLE o IMPACT_CRADLE_WITH_CENTER_ROLL */}
+                      {(zona.tipoCamaImpacto === TipoCamaImpacto.IMPACT_CRADLE || zona.tipoCamaImpacto === TipoCamaImpacto.IMPACT_CRADLE_WITH_CENTER_ROLL) && (
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+                            Número de Estaciones
+                          </label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            value={zona.numEstaciones || 0}
+                            onChange={(e) => actualizarZona(index, 'numEstaciones', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
+                          />
+                        </div>
+                      )}
+
+                      {/* Marca / Fabricante - para todos excepto NO_IMPACT_PROTECTION */}
+                      {showMarcaFabricante(zona.tipoCamaImpacto) && (
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+                            Marca / Fabricante
+                          </label>
+                          <input
+                            type="text"
+                            value={zona.marcaFabricante || ''}
+                            onChange={(e) => actualizarZona(index, 'marcaFabricante', e.target.value)}
+                            placeholder="Ingrese marca o fabricante"
+                            className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>

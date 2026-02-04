@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TransportadorGeometria, Perfil } from '../types';
 
 interface TransportadorGeometriaFormProps {
@@ -17,12 +17,37 @@ const TransportadorGeometriaForm: React.FC<TransportadorGeometriaFormProps> = ({
   geometria,
   onChange,
 }) => {
-  // Estado para unidad de longitud
-  const [longitudUnidad, setLongitudUnidad] = useState<'m' | 'ft'>('m');
-  // Estado para unidad de velocidad
-  const [velocidadUnidad, setVelocidadUnidad] = useState<'m/s' | 'fpm'>('m/s');
-  // Estado para unidad de ancho
-  const [anchoUnidad, setAnchoUnidad] = useState<'mm' | 'in'>('mm');
+  // Initialize unit states from prop to preserve user selections
+  const [longitudUnidad, setLongitudUnidad] = useState<'m' | 'ft'>(geometria.longitudUnidad || 'm');
+  const [velocidadUnidad, setVelocidadUnidad] = useState<'m/s' | 'fpm'>(geometria.velocidadUnidad || 'm/s');
+  const [anchoUnidad, setAnchoUnidad] = useState<'mm' | 'in'>(geometria.anchoUnidad || 'mm');
+  
+  // Sync unit states when prop changes (e.g., when navigating back to this section)
+  useEffect(() => {
+    if (geometria.longitudUnidad) setLongitudUnidad(geometria.longitudUnidad);
+  }, [geometria.longitudUnidad]);
+  
+  useEffect(() => {
+    if (geometria.velocidadUnidad) setVelocidadUnidad(geometria.velocidadUnidad);
+  }, [geometria.velocidadUnidad]);
+  
+  useEffect(() => {
+    if (geometria.anchoUnidad) setAnchoUnidad(geometria.anchoUnidad);
+  }, [geometria.anchoUnidad]);
+  
+  // Save unit selections when they change
+  const handleUnidadChange = (tipo: 'longitud' | 'velocidad' | 'ancho', valor: string) => {
+    if (tipo === 'longitud') {
+      setLongitudUnidad(valor as 'm' | 'ft');
+      onChange({ ...geometria, longitudUnidad: valor as 'm' | 'ft' });
+    } else if (tipo === 'velocidad') {
+      setVelocidadUnidad(valor as 'm/s' | 'fpm');
+      onChange({ ...geometria, velocidadUnidad: valor as 'm/s' | 'fpm' });
+    } else {
+      setAnchoUnidad(valor as 'mm' | 'in');
+      onChange({ ...geometria, anchoUnidad: valor as 'mm' | 'in' });
+    }
+  };
 
   const handleChange = (field: keyof TransportadorGeometria, value: number | Perfil | undefined) => {
     onChange({
@@ -116,7 +141,7 @@ const TransportadorGeometriaForm: React.FC<TransportadorGeometriaFormProps> = ({
               />
               <select
                 value={longitudUnidad}
-                onChange={(e) => setLongitudUnidad(e.target.value as 'm' | 'ft')}
+                onChange={(e) => handleUnidadChange('longitud', e.target.value)}
                 className="px-3 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#11cdef] outline-none cursor-pointer"
               >
                 <option value="m">m</option>
@@ -183,7 +208,7 @@ const TransportadorGeometriaForm: React.FC<TransportadorGeometriaFormProps> = ({
               />
               <select
                 value={anchoUnidad}
-                onChange={(e) => setAnchoUnidad(e.target.value as 'mm' | 'in')}
+                onChange={(e) => handleUnidadChange('ancho', e.target.value)}
                 className="px-3 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#11cdef] outline-none cursor-pointer"
               >
                 <option value="mm">mm</option>
@@ -208,7 +233,7 @@ const TransportadorGeometriaForm: React.FC<TransportadorGeometriaFormProps> = ({
               />
               <select
                 value={velocidadUnidad}
-                onChange={(e) => setVelocidadUnidad(e.target.value as 'm/s' | 'fpm')}
+                onChange={(e) => handleUnidadChange('velocidad', e.target.value)}
                 className="px-3 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#11cdef] outline-none cursor-pointer"
               >
                 <option value="m/s">m/s</option>

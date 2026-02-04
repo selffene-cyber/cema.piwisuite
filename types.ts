@@ -244,29 +244,17 @@ export type ClienteIndustrial =
   // Otro
   | 'otro';
 
-export type TipoCubiertaSuperior =
-  | 'DIN_X (Alta resistencia a abrasión. Uso en minería severa y materiales altamente abrasivos).' 
-  | 'DIN_Y (Resistencia media a abrasión. Uso industrial general).'
-  | 'DIN_Z (Servicio liviano. Materiales poco abrasivos).'
-  | 'RMA_1'              // Alta resistencia a abrasión y corte según RMA (equivalente aproximado a DIN X).
-  | 'RMA_2'              // Servicio general según RMA (equivalente aproximado a DIN Y / Z).
-  | 'OIL_RESISTANT (Compuesto resistente a aceites, grasas e hidrocarburos).'
-  | 'HEAT_RESISTANT (Diseñada para transporte de material a alta temperatura).'
+export type TipoCubiertaSuperiorInferior =
+  | 'DIN X (Alta resistencia a abrasión. Uso en minería severa y materiales altamente abrasivos).' 
+  | 'DIN Y (Resistencia media a abrasión. Uso industrial general).'
+  | 'DIN Z (Servicio liviano. Materiales poco abrasivos).'
+  | 'RMA 1'              // Alta resistencia a abrasión y corte según RMA (equivalente aproximado a DIN X).
+  | 'RMA 2'              // Servicio general según RMA (equivalente aproximado a DIN Y / Z).
+  | 'OIL RESISTANT (Compuesto resistente a aceites, grasas e hidrocarburos).'
+  | 'HEAT RESISTANT (Diseñada para transporte de material a alta temperatura).'
   | 'DIN K (Cubierta retardante al fuego para aplicaciones con requisitos de seguridad.).'
-  | 'CHEMICAL_RESISTANT (Resistente a ambientes o materiales químicamente agresivos).'
-  | 'FOOD_GRADE (Cumple requisitos sanitarios para aplicaciones alimentarias).';
-
-export type TipoCubiertaInferior =
-  | 'DIN_X (Alta resistencia a abrasión para retornos con fuerte desgaste por carryback).'
-  | 'DIN_Y (Cubierta inferior estándar para la mayoría de los transportadores).'
-  | 'DIN_Z (Servicio liviano, bajas exigencias mecánicas en retorno).' 
-  | 'RMA_1'              // Alta resistencia al desgaste en retornos severos.
-  | 'RMA_2'              // Retorno de uso general según RMA.
-  | 'LOW_FRICTION (Bajo coeficiente de fricción. Requerida para camas deslizantes (slider beds)).'
-  | 'OIL_RESISTANT (Resistente a aceites y grasas en el retorno).'      // .
-  | 'DIN K (Cubierta retardante al fuego para aplicaciones con requisitos de seguridad.).'
-  | 'FOOD_GRADE (Cumple requisitos sanitarios para aplicaciones alimentarias).'
-  | 'CHEMICAL_RESISTANT (Resistente a ambientes o materiales químicamente agresivos).';
+  | 'CHEMICAL RESISTANT (Resistente a ambientes o materiales químicamente agresivos).'
+  | 'FOOD GRADE (Cumple requisitos sanitarios para aplicaciones alimentarias).';
 
   /**
  * Tipo de polín de retorno.
@@ -274,12 +262,12 @@ export type TipoCubiertaInferior =
  * Define la geometría y función del soporte de la correa en el tramo de retorno.
  */
 export type TipoRetorno =
-  | 'FLAT_RETURN'        // Retorno plano con un solo rodillo horizontal. Es el tipo más común y estándar según CEMA.
-  | 'V_RETURN'           // Retorno en V (normalmente 10°–15° por lado). Mejora el centrado de la correa en retornos largos.
-  | 'TRAINING_RETURN'    // Polín de retorno autoalineante. Usado para corregir desalineamientos persistentes.
-  | 'RUBBER_DISK_RETURN' // Rodillo de retorno con discos de goma. Reduce acumulación de material pegajoso (carryback).
-  | 'SPIRAL_RETURN'      // Rodillo de retorno espiralado. Facilita la autolimpieza en materiales húmedos o adhesivos.
-  | 'IMPACT_RETURN';     // Retorno reforzado para zonas con caída de material o limpieza agresiva (uso poco común).
+  | 'FLAT_RETURN (Retorno plano con un solo rodillo horizontal)'        // Retorno plano con un solo rodillo horizontal. Es el tipo más común y estándar según CEMA.
+  | 'V_RETURN (Retorno en V (normalmente 10°–15° por lado))'           // Retorno en V (normalmente 10°–15° por lado). Mejora el centrado de la correa en retornos largos.
+  | 'TRAINING_RETURN (Polín de retorno autoalineante)'    // Polín de retorno autoalineante. Usado para corregir desalineamientos persistentes.
+  | 'RUBBER_DISK_RETURN (Rodillo de retorno con discos de goma)' // Rodillo de retorno con discos de goma. Reduce acumulación de material pegajoso (carryback).
+  | 'SPIRAL_RETURN (Rodillo de retorno espiralado)'      // Rodillo de retorno espiralado. Facilita la autolimpieza en materiales húmedos o adhesivos.
+  | 'IMPACT_RETURN (Retorno reforzado para zonas con caída de material o limpieza agresiva)';     // Retorno reforzado para zonas con caída de material o limpieza agresiva (uso poco común).
 
   /**
  * Tipo de polín de carga.
@@ -287,13 +275,13 @@ export type TipoRetorno =
  * Define la geometría, función y comportamiento del soporte de la correa en el tramo de carga.
  */
 export type TipoPolinCarga =
-  | 'TROUGHING_STANDARD'     // Polín de carga estándar con rodillos en artesa (20°, 35° o 45°). Es la configuración base según CEMA.
-  | 'IMPACT_IDLER'           // Polín de impacto con rodillos amortiguados (anillos de goma). Usado en zonas de carga para absorber impacto.
-  | 'TRAINING_IDLER'         // Polín de carga autoalineante. Usado como elemento correctivo para problemas de tracking.
-  | 'OFFSET_TROUGHING'       // Polín de carga con rodillos desplazados. Aplicaciones especiales de transición o geometría particular.
-  | 'EQUAL_TROUGHING'        // Polín de carga con rodillos laterales iguales. Configuración tradicional reconocida por CEMA.
-  | 'PICKUP_IDLER'           // Polín ubicado inmediatamente después de la zona de carga, diseñado para estabilizar la correa cargada.
-  | 'TRANSITION_IDLER';      // Polín usado en zonas de transición entre tambor plano y artesa.
+  | 'TROUGHING_STANDARD (Polín de carga estándar con rodillos en artesa)'     // Polín de carga estándar con rodillos en artesa (20°, 35° o 45°). Es la configuración base según CEMA.
+  | 'IMPACT_IDLER (Polín de impacto con rodillos amortiguados con anillos de goma)'           // Polín de impacto con rodillos amortiguados (anillos de goma). Usado en zonas de carga para absorber impacto.
+  | 'TRAINING_IDLER (Polín de carga autoalineante. Usado como elemento correctivo para problemas de tracking)'         // Polín de carga autoalineante. Usado como elemento correctivo para problemas de tracking.
+  | 'OFFSET_TROUGHING (Polín de carga con rodillos desplazados. Aplicaciones especiales de transición o geometría particular)'       // Polín de carga con rodillos desplazados. Aplicaciones especiales de transición o geometría particular.
+  | 'EQUAL_TROUGHING (Polín de carga con rodillos laterales iguales)'        // Polín de carga con rodillos laterales iguales. Configuración tradicional reconocida por CEMA.
+  | 'PICKUP_IDLER (olín ubicado inmediatamente después de la zona de carga, diseñado para estabilizar la correa cargada)'           // Polín ubicado inmediatamente después de la zona de carga, diseñado para estabilizar la correa cargada.
+  | 'TRANSITION_IDLER (Polín usado en zonas de transición entre tambor plano y artesa)';      // Polín usado en zonas de transición entre tambor plano y artesa.
 
 export type NivelDerrames =
   | 'NONE- No se observan derrames. Condición limpia y controlada.'
@@ -546,7 +534,6 @@ export enum ZonaInstalacion {
   HEAD = 'HEAD',
   TAIL = 'TAIL',
   RETURN = 'RETURN',
-  CARGO = 'CARGO'
 }
 
 // -----------------------------------------------------------------------------
@@ -557,12 +544,13 @@ export enum ZonaInstalacion {
  * Tipo de cama de impacto.
  */
 export enum TipoCamaImpacto {
-  IMPACT_IDLER_SET = 'IMPACT_IDLER_SET',
-  SLIDER_BED = 'SLIDER_BED',
-  IMPACT_CRADLE = 'IMPACT_CRADLE',
-  IMPACT_CRADLE_WITH_CENTER_ROLL = 'IMPACT_CRADLE_WITH_CENTER_ROLL',
-  NO_IMPACT_PROTECTION = 'NO_IMPACT_PROTECTION'
+  IMPACT_IDLER_SET = 'IMPACT_IDLER_SET - Conjunto de polines de impacto con rodillos amortiguados (generalmente con anillos de goma) instalados en la zona de carga para absorber energía de impacto puntual.',
+  SLIDER_BED = 'SLIDER_BED - Cama deslizante de soporte continuo donde la correa se apoya y desliza sobre una superficie fija, sin elementos rodantes.',
+  IMPACT_CRADLE = 'IMPACT_CRADLE - Cama o cuna de impacto compuesta por una estructura modular con barras amortiguadoras diseñadas para absorber y distribuir la energía de impacto.',
+  IMPACT_CRADLE_WITH_CENTER_ROLL = 'IMPACT_CRADLE_WITH_CENTER_ROLL - Cama de impacto que combina barras amortiguadoras laterales con un rodillo central, manteniendo soporte rodante en el eje de la correa.',
+  NO_IMPACT_PROTECTION = 'NO_IMPACT_PROTECTION - Configuración sin elementos específicos de absorción de impacto en la zona de carga.'
 }
+
 
 /**
  * Tipo de descarga del material.
@@ -571,6 +559,16 @@ export enum TipoDescarga {
   CENTRAL = 'CENTRAL',
   DESVIADA = 'DESVIADA',
   CASCADA = 'CASCADA'
+}
+
+/**
+ * Unidad de medida para largo de zona de impacto.
+ */
+export enum LargoZonaImpactoUnidad {
+  MM = 'mm',
+  M = 'm',
+  IN = 'in',
+  FT = 'ft'
 }
 
 // -----------------------------------------------------------------------------
@@ -651,17 +649,40 @@ export interface ZonaCarga {
   tamanoLumpMax_mm: number;
   camaImpacto: boolean;
   tipoCamaImpacto?: TipoCamaImpacto;
-  largoCamaImpacto_m?: number;
+  largoZonaImpacto?: number;
+  largoZonaImpactoUnidad?: LargoZonaImpactoUnidad;
+  numPolinesImpacto?: number;
+  largoCamaDeslizante?: number;
+  numEstaciones?: number;
+  marcaFabricante?: string;
 }
 
 /**
- * Sistema de limpieza de correa.
+ * Posición del raspador en el transportador.
+ * Define la ubicación del sistema de limpieza de correa.
  */
-export interface SistemaLimpieza {
-  limpiezaPrimaria: boolean;
-  limpiezaSecundaria: boolean;
-  tipolimpieza?: string;
-  zonaInstalacion?: ZonaInstalacion;
+export enum PosicionRaspador {
+  PRIMARIA = 'Primaria',
+  SECUNDARIA = 'Secundaria',
+  TERCIARIA = 'Terciaria',
+  CUATERNARIA = 'Cuaternaria',
+  QUINTA = 'Quinta',
+  SEXTA = 'Sexta',
+  SEPTIMA = 'Séptima',
+  OCTAVA = 'Octava',
+  V_PLOW = 'V-Plow',
+  DIAGONAL = 'Diagonal',
+  OTRO = 'Otro'
+}
+
+/**
+ * Configuración de un raspador individual.
+ */
+export interface Raspador {
+  posicion: PosicionRaspador;
+  tipo: string;
+  zonaInstalacion: ZonaInstalacion;
+  marcaFabricante?: string;
 }
 
 /**
@@ -814,8 +835,12 @@ export interface TransportadorCorrea {
   tipo: 'EP' | 'ST';
   resistenciaNominal_kNm: number;
   numTelasCables: number;
-  tipoCubiertaSuperior: string;
-  tipoCubiertaInferior: string;
+  // Campos específicos para correas ST
+  resistenciaST_kN_m?: number;  // OBLIGATORIO para correas ST
+  pasoCable_mm?: number;        // RECOMENDADO para ST
+  diametroCable_mm?: number;    // RECOMENDADO para ST
+  tipoCubiertaSuperior: TipoCubiertaSuperiorInferior;
+  tipoCubiertaInferior: TipoCubiertaSuperiorInferior;
   espesorCubiertaSup_mm: number;
   espesorCubiertaInf_mm: number;
   
@@ -851,11 +876,8 @@ export interface TransportadorZonaCarga {
 // -----------------------------------------------------------------------------
 
 export interface TransportadorLimpieza {
-  // Limpieza (8.1)
-  limpiezaPrimaria: boolean;
-  limpiezaSecundaria: boolean;
-  tipoLimpiador?: string;
-  zonaInstalacion?: ZonaInstalacion;
+  // Raspadores (8.1)
+  raspadores: Raspador[];
   
   // Problemas operacionales (8.2)
   problemas: ProblemasOperacionales;

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Evaluation, Transportador } from './types';
+import { User, Evaluation, Transportador, TransportadorIdentity, TransportadorGeometria, TransportadorMaterial, TransportadorCapacidad, TransportadorCorrea, TransportadorPolines, TransportadorZonaCarga, TransportadorLimpieza, TransportadorTambores, TransportadorAccionamiento, TransportadorTakeUp, TransportadorCurvas } from './types';
 import Login from './screens/Login';
 import Dashboard from './screens/Dashboard';
 import EvaluationForm from './screens/EvaluationForm';
@@ -42,6 +42,214 @@ const App: React.FC = () => {
   const [transportadorView, setTransportadorView] = useState<'list' | 'form' | 'detail'>('list');
   const [transportadorToEdit, setTransportadorToEdit] = useState<Transportador | null>(null);
   const [loadingTransportadores, setLoadingTransportadores] = useState(false);
+  
+  // Transportador form state (persists across tab navigation)
+  const [transportadorFormData, setTransportadorFormData] = useState<{
+    identity: TransportadorIdentity;
+    geometria: TransportadorGeometria;
+    material: TransportadorMaterial;
+    capacidad: TransportadorCapacidad;
+    correa: TransportadorCorrea;
+    polines: TransportadorPolines;
+    zonaCarga: TransportadorZonaCarga;
+    limpieza: TransportadorLimpieza;
+    tambores: TransportadorTambores;
+    accionamiento: TransportadorAccionamiento;
+    takeUp: TransportadorTakeUp;
+    curvas: TransportadorCurvas;
+  } | null>(null);
+  
+  // Initialize form data when opening edit mode
+  const initializeTransportadorForm = useCallback((transportador: Transportador | null) => {
+    if (transportador) {
+      setTransportadorFormData({
+        identity: transportador.identity,
+        geometria: transportador.geometria || {
+          longitudTotal_m: 0,
+          elevacionTotal_m: 0,
+          inclinacionPromedio_grados: 0,
+          anchoBanda_mm: 0,
+          velocidadNominal_ms: 0,
+          perfil: 'HORIZONTAL' as any,
+          numTramosInclinados: 0,
+          tramosInclinados: [],
+          tramosHorizontal: [],
+        },
+        material: transportador.material || {
+          material: '',
+          densidadAparante_tm3: 1.5,
+          tamanoMaxParticula_mm: 0,
+          tamanoMedio_mm: 0,
+          humedad: 'MOIST' as any,
+          fluidez: 'media',
+          abrasividad: 'MODERATE' as any,
+        },
+        capacidad: transportador.capacidad || {
+          capacidadNominal_th: 0,
+          capacidadMaxima_th: 0,
+          factorLlenado_pct: 75,
+          regimenOperacion: 'CONTINUO' as any,
+        },
+        correa: transportador.correa || {
+          tipo: 'EP',
+          resistenciaNominal_kNm: 0,
+          numTelasCables: 0,
+          tipoCubiertaSuperior: 'DIN X (Alta resistencia a abrasión. Uso en minería severa y materiales altamente abrasivos).' as any,
+          tipoCubiertaInferior: 'DIN X (Alta resistencia a abrasión. Uso en minería severa y materiales altamente abrasivos).' as any,
+          espesorCubiertaSup_mm: 0,
+          espesorCubiertaInf_mm: 0,
+          tipoEmpalme: 'Vulcanized' as any,
+          longitudEmpalme_mm: 0,
+        },
+        polines: transportador.polines || {
+          polinesCarga: [],
+          polinesRetorno: [],
+        },
+        zonaCarga: transportador.zonaCarga || {
+          numZonasCarga: 0,
+          zonas: [],
+        },
+        limpieza: transportador.limpieza || {
+          raspadores: [],
+          problemas: {
+            carryback: 'LEVEL_II' as any,
+            derrames: 'LOW' as any,
+            acumulacionRetorno: 'LOW' as any,
+          },
+        },
+        tambores: transportador.tambores || {
+          tambores: [],
+        },
+        accionamiento: transportador.accionamiento || {
+          potenciaInstalada_kW: 0,
+          numMotores: 1,
+          tipoArranque: 'DIRECT_ON_LINE' as any,
+          reductor: '',
+          backstop: false,
+          freno: false,
+        },
+        takeUp: transportador.takeUp || {
+          takeUp: {
+            tipoTakeUp: 'SCREW_TAKEUP' as any,
+            ubicacionTakeUp: 'TAIL' as any,
+            carreraDisponible_m: 1.5,
+          },
+        },
+        curvas: transportador.curvas || {
+          curvasHorizontales: false,
+          radioHorizontal_m: 0,
+          curvasVerticales: false,
+          radioVertical_m: 0,
+        },
+      });
+    } else {
+      // New transportador - use empty defaults
+      setTransportadorFormData({
+        identity: {
+          cliente: '' as any,
+          faena: '',
+          area: '',
+          codigoTransportador: '',
+          nombreDescriptivo: '',
+          tipoEquipo: 'TRANSPORTADOR_CONVENCIONAL' as any,
+          fechaLevantamiento: new Date().toISOString().split('T')[0],
+          usuario: '',
+          fuenteDato: 'levantamiento_campo' as any,
+          nivelConfianza: 50,
+          comentarios: '',
+        },
+        geometria: {
+          longitudTotal_m: 0,
+          elevacionTotal_m: 0,
+          inclinacionPromedio_grados: 0,
+          anchoBanda_mm: 0,
+          velocidadNominal_ms: 0,
+          perfil: 'HORIZONTAL' as any,
+          numTramosInclinados: 0,
+          tramosInclinados: [],
+          tramosHorizontal: [],
+        },
+        material: {
+          material: '',
+          densidadAparante_tm3: 1.5,
+          tamanoMaxParticula_mm: 0,
+          tamanoMedio_mm: 0,
+          humedad: 'MOIST' as any,
+          fluidez: 'media',
+          abrasividad: 'MODERATE' as any,
+        },
+        capacidad: {
+          capacidadNominal_th: 0,
+          capacidadMaxima_th: 0,
+          factorLlenado_pct: 75,
+          regimenOperacion: 'CONTINUO' as any,
+        },
+        correa: {
+          tipo: 'EP',
+          resistenciaNominal_kNm: 0,
+          numTelasCables: 0,
+          tipoCubiertaSuperior: 'DIN X (Alta resistencia a abrasión. Uso en minería severa y materiales altamente abrasivos).' as any,
+          tipoCubiertaInferior: 'DIN X (Alta resistencia a abrasión. Uso en minería severa y materiales altamente abrasivos).' as any,
+          espesorCubiertaSup_mm: 0,
+          espesorCubiertaInf_mm: 0,
+          tipoEmpalme: 'Vulcanized' as any,
+          longitudEmpalme_mm: 0,
+        },
+        polines: {
+          polinesCarga: [],
+          polinesRetorno: [],
+        },
+        zonaCarga: {
+          numZonasCarga: 0,
+          zonas: [],
+        },
+        limpieza: {
+          raspadores: [],
+          problemas: {
+            carryback: 'LEVEL_II' as any,
+            derrames: 'LOW' as any,
+            acumulacionRetorno: 'LOW' as any,
+          },
+        },
+        tambores: {
+          tambores: [],
+        },
+        accionamiento: {
+          potenciaInstalada_kW: 0,
+          numMotores: 1,
+          tipoArranque: 'DIRECT_ON_LINE' as any,
+          reductor: '',
+          backstop: false,
+          freno: false,
+        },
+        takeUp: {
+          takeUp: {
+            tipoTakeUp: 'SCREW_TAKEUP' as any,
+            ubicacionTakeUp: 'TAIL' as any,
+            carreraDisponible_m: 1.5,
+          },
+        },
+        curvas: {
+          curvasHorizontales: false,
+          radioHorizontal_m: 0,
+          curvasVerticales: false,
+          radioVertical_m: 0,
+        },
+      });
+    }
+  }, []);
+  
+  // Initialize form when entering edit mode
+  useEffect(() => {
+    console.log('[App] useEffect - transportadorView:', transportadorView, 'transportadorToEdit:', transportadorToEdit?.id);
+    if (transportadorView === 'form' && transportadorToEdit) {
+      console.log('[App] Initializing form with transportador:', transportadorToEdit.id);
+      initializeTransportadorForm(transportadorToEdit);
+    } else if (transportadorView === 'form' && !transportadorToEdit) {
+      console.log('[App] Initializing form for NEW transportador');
+      initializeTransportadorForm(null);
+    }
+  }, [transportadorView, transportadorToEdit, initializeTransportadorForm]);
   
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
@@ -337,17 +545,42 @@ const App: React.FC = () => {
 
       // Form view (edit/create)
       if (transportadorView === 'form') {
+        // Initialize form with empty data if creating new
+        if (!transportadorFormData && transportadorToEdit === null) {
+          initializeTransportadorForm(null);
+        }
+        
+        if (!transportadorFormData) {
+          return <div>Cargando formulario...</div>;
+        }
+        
         return (
           <TransportadorForm
             transportador={transportadorToEdit}
-            onSave={async (t) => {
-              await saveTransportador(t);
+            formData={transportadorFormData}
+            onFormDataChange={(section, data) => {
+              console.log('[App] onFormDataChange called:', section, data);
+              setTransportadorFormData(prev => prev ? { ...prev, [section]: data } : null);
+            }}
+            onSave={async () => {
+              if (!transportadorFormData) return;
+              const newTransportador: Transportador = {
+                id: transportadorToEdit?.id || crypto.randomUUID(),
+                ...transportadorFormData,
+                estado: transportadorToEdit?.estado || 'borrador',
+                createdAt: transportadorToEdit?.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                version: transportadorToEdit?.version ? transportadorToEdit.version + 1 : 1,
+              };
+              await saveTransportador(newTransportador);
               setTransportadorView('list');
               setTransportadorToEdit(null);
+              setTransportadorFormData(null);
             }}
             onCancel={() => {
               setTransportadorView('list');
               setTransportadorToEdit(null);
+              setTransportadorFormData(null);
             }}
           />
         );

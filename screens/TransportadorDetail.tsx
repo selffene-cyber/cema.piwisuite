@@ -21,7 +21,7 @@ const calculateCompleteness = (t: Transportador): number => {
     { key: 'correa', fields: ['tipo', 'resistenciaNominal_kNm'] },
     { key: 'polines', fields: ['polinesCarga', 'polinesRetorno'] },
     { key: 'zonaCarga', fields: ['numZonasCarga', 'zonas'] },
-    { key: 'limpieza', fields: ['limpiezaPrimaria', 'limpiezaSecundaria'] },
+    { key: 'limpieza', fields: ['raspadores', 'problemas'] },
     { key: 'tambores', fields: ['tambores'] },
     { key: 'accionamiento', fields: ['potenciaInstalada_kW', 'numMotores'] },
     { key: 'takeUp', fields: ['takeUp'] },
@@ -54,7 +54,7 @@ const getSectionCompleteness = (t: Transportador): Record<string, number> => {
     'Correa': { data: t.correa, fields: ['tipo', 'resistenciaNominal_kNm', 'tipoCubiertaSuperior', 'tipoCubiertaInferior'] },
     'Polines': { data: t.polines, fields: ['polinesCarga', 'polinesRetorno'] },
     'Zona de Carga': { data: t.zonaCarga, fields: ['numZonasCarga', 'zonas'] },
-    'Limpieza': { data: t.limpieza, fields: ['limpiezaPrimaria', 'limpiezaSecundaria', 'problemas'] },
+    'Limpieza': { data: t.limpieza, fields: ['raspadores', 'problemas'] },
     'Tambores': { data: t.tambores, fields: ['tambores'] },
     'Accionamiento': { data: t.accionamiento, fields: ['potenciaInstalada_kW', 'numMotores', 'tipoArranque', 'reductor'] },
     'Take-Up': { data: t.takeUp, fields: ['takeUp'] },
@@ -101,6 +101,204 @@ const TIPO_EQUIPO_LABELS: Record<string, string> = {
   TRANSPORTADOR_INCLINADO_FUERTE: 'Transportador Inclinado',
   PIPE_TUBULAR: 'Pipe/ tubular',
 };
+
+// Labels for Fuente de Levantamiento
+const FUENTE_LABELS: Record<string, string> = {
+  levantamiento_campo: 'Levantamiento de Campo',
+  datos_proyecto: 'Datos de Proyecto',
+  revision_dibujo: 'Revisión de Dibujo',
+  especificacion_tecnica: 'Especificación Técnica',
+  otro: 'Otro',
+};
+
+// Labels for Tipo Polín de Carga
+const TIPO_POLIN_CARGA_LABELS: Record<string, string> = {
+  'TROUGHING_STANDARD': 'Polín de Carga Estándard',
+  'IMPACT_IDLER': 'Polín de Impacto',
+  'TRAINING_IDLER': 'Polín Autoalineante',
+  'OFFSET_TROUGHING': 'Polín con Rodillos Desplazados',
+  'EQUAL_TROUGHING': 'Polín con Rodillos Iguales',
+  'PICKUP_IDLER': 'Polín Pickup',
+  'TRANSITION_IDLER': 'Polín de Transición',
+};
+
+// Labels for Tipo Polín de Retorno
+const TIPO_POLIN_RETORNO_LABELS: Record<string, string> = {
+  'FLAT_RETURN': 'Retorno Plano',
+  'V_RETURN': 'Retorno en V',
+  'TRAINING_RETURN': 'Retorno Autoalineante',
+  'RUBBER_DISK_RETURN': 'Retorno con Discos de Goma',
+  'SPIRAL_RETURN': 'Retorno Espiralado',
+  'IMPACT_RETURN': 'Retorno de Impacto',
+};
+
+// Labels for Zona de Instalación
+const ZONA_INSTALACION_LABELS: Record<string, string> = {
+  HEAD: 'Cabeza (Head)',
+  TAIL: 'Cola (Tail)',
+  RETURN: 'Retorno',
+};
+
+// Labels for Nivel Carryback
+const CARRYBACK_LABELS: Record<string, string> = {
+  LEVEL_I: 'Nivel I - Mínimo',
+  LEVEL_II: 'Nivel II - Leve',
+  LEVEL_III: 'Nivel III - Moderado',
+  LEVEL_IV: 'Nivel IV - Severo',
+};
+
+// Labels for Nivel Derrames
+const DERRAMES_LABELS: Record<string, string> = {
+  'NONE': 'Ninguno',
+  'LOW': 'Bajo',
+  'MODERATE': 'Moderado',
+  'HIGH': 'Alto',
+  'SEVERE': 'Severo',
+};
+
+// Labels for Acumulación en Retorno
+const ACUMULACION_RETORNO_LABELS: Record<string, string> = {
+  'NONE': 'Ninguna',
+  'LOW': 'Baja',
+  'MODERATE': 'Moderada',
+  'HIGH': 'Alta',
+  'SEVERE': 'Severa',
+};
+
+// Labels for Tipo Tambor
+const TIPO_TAMBOR_LABELS: Record<string, string> = {
+  DRIVE: 'Motriz (Drive)',
+  TAIL: 'Cola (Tail)',
+  SNUB: 'Deflector (Snub)',
+  BEND: 'Curva (Bend)',
+  TAKEUP: 'Tensión (Take-up)',
+  DEFLECTOR: 'Desviador (Deflector)',
+};
+
+// Labels for Tipo Descarga
+const TIPO_DESCARGA_LABELS: Record<string, string> = {
+  CENTRAL: 'Central',
+  DESVIADA: 'Desviada',
+  CASCADA: 'Cascada',
+};
+
+// Labels for Perfil
+const PERFIL_LABELS: Record<string, string> = {
+  HORIZONTAL: 'Horizontal',
+  INCLINADO: 'Inclinado',
+  MIXTO: 'Mixto',
+};
+
+// Labels for Régimen de Operación
+const REGIMEN_LABELS: Record<string, string> = {
+  CONTINUO: 'Continuo',
+  INTERMITENTE: 'Intermitente',
+  CAMPAÑA: 'Campaña',
+};
+
+// Helper to render polín de carga detail
+const renderPolinCarga = (polin: any, index: number) => (
+  <div key={index} className="p-3 bg-gray-50 rounded-lg mb-2 last:mb-0">
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-xs font-bold text-[#5e72e4] uppercase">Estación #{index + 1}</span>
+    </div>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+      <div><span className="text-slate-400">Tipo:</span> <span className="text-[#32325d]">{TIPO_POLIN_CARGA_LABELS[polin.tipo?.split(' (')[0]] || polin.tipo || '-'}</span></div>
+      <div><span className="text-slate-400">Clase CEMA:</span> <span className="text-[#32325d]">{polin.claseCEMA || '-'}</span></div>
+      <div><span className="text-slate-400">Espaciado:</span> <span className="text-[#32325d]">{polin.espaciamiento_m ? `${polin.espaciamiento_m} m` : '-'}</span></div>
+      <div><span className="text-slate-400">Diámetro:</span> <span className="text-[#32325d]">{polin.diametroRodillo_mm ? `${polin.diametroRodillo_mm} mm` : '-'}</span></div>
+      <div><span className="text-slate-400">Ángulo:</span> <span className="text-[#32325d]">{polin.anguloArtesa ? `${polin.anguloArtesa}°` : '-'}</span></div>
+      <div><span className="text-slate-400">Material:</span> <span className="text-[#32325d]">{polin.material || '-'}</span></div>
+    </div>
+  </div>
+);
+
+// Helper to render polín de retorno detail
+const renderPolinRetorno = (polin: any, index: number) => (
+  <div key={index} className="p-3 bg-gray-50 rounded-lg mb-2 last:mb-0">
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-xs font-bold text-[#5e72e4] uppercase">Estación #{index + 1}</span>
+    </div>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+      <div><span className="text-slate-400">Tipo:</span> <span className="text-[#32325d]">{TIPO_POLIN_RETORNO_LABELS[polin.tipo?.split(' (')[0]] || polin.tipo || '-'}</span></div>
+      <div><span className="text-slate-400">Espaciado:</span> <span className="text-[#32325d]">{polin.espaciamiento_m ? `${polin.espaciamiento_m} m` : '-'}</span></div>
+      <div><span className="text-slate-400">Diámetro:</span> <span className="text-[#32325d]">{polin.diametroRodillo_mm ? `${polin.diametroRodillo_mm} mm` : '-'}</span></div>
+    </div>
+  </div>
+);
+
+// Helper to render zona de carga detail
+const renderZonaCarga = (zona: any, index: number) => (
+  <div key={index} className="p-3 bg-gray-50 rounded-lg mb-2 last:mb-0">
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-xs font-bold text-[#5e72e4] uppercase">Zona #{index + 1}</span>
+    </div>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+      <div><span className="text-slate-400">Altura Caída Diseño:</span> <span className="text-[#32325d]">{zona.alturaCaidaDiseno_m ? `${zona.alturaCaidaDiseno_m} m` : '-'}</span></div>
+      <div><span className="text-slate-400">Altura Caída Real:</span> <span className="text-[#32325d]">{zona.alturaCaidaReal_m ? `${zona.alturaCaidaReal_m} m` : '-'}</span></div>
+      <div><span className="text-slate-400">Tipo Descarga:</span> <span className="text-[#32325d]">{TIPO_DESCARGA_LABELS[zona.tipoDescarga] || zona.tipoDescarga || '-'}</span></div>
+      <div><span className="text-slate-400">Lump Max:</span> <span className="text-[#32325d]">{zona.tamanoLumpMax_mm ? `${zona.tamanoLumpMax_mm} mm` : '-'}</span></div>
+      <div><span className="text-slate-400">Cama de Impacto:</span> <span className="text-[#32325d]">{zona.camaImpacto ? 'Sí' : 'No'}</span></div>
+    </div>
+    {zona.camaImpacto && (
+      <div className="mt-2 pt-2 border-t border-gray-200">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+          <div><span className="text-slate-400">Tipo Cama:</span> <span className="text-[#32325d]">{zona.tipoCamaImpacto?.split(' - ')[0] || '-'}</span></div>
+          {zona.tipoCamaImpacto && zona.tipoCamaImpacto.includes('IMPACT_IDLER_SET') && zona.numPolinesImpacto !== undefined && (
+            <div><span className="text-slate-400">N° Polines Impacto:</span> <span className="text-[#32325d]">{zona.numPolinesImpacto}</span></div>
+          )}
+          {zona.tipoCamaImpacto && zona.tipoCamaImpacto.includes('SLIDER_BED') && zona.largoCamaDeslizante !== undefined && (
+            <div><span className="text-slate-400">Largo Cama:</span> <span className="text-[#32325d]">{zona.largoCamaDeslizante} mm</span></div>
+          )}
+          {zona.tipoCamaImpacto && zona.tipoCamaImpacto.includes('IMPACT_CRADLE') && zona.numEstaciones !== undefined && (
+            <div><span className="text-slate-400">N° Estaciones:</span> <span className="text-[#32325d]">{zona.numEstaciones}</span></div>
+          )}
+          {zona.largoZonaImpacto !== undefined && (
+            <div><span className="text-slate-400">Largo Zona:</span> <span className="text-[#32325d]">{zona.largoZonaImpacto} {zona.largoZonaImpactoUnidad || ''}</span></div>
+          )}
+          {zona.marcaFabricante && (
+            <div><span className="text-slate-400">Marca/Fabricante:</span> <span className="text-[#32325d]">{zona.marcaFabricante}</span></div>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+);
+
+// Helper to render raspador detail
+const renderRaspador = (raspador: any, index: number) => (
+  <div key={index} className="p-3 bg-gray-50 rounded-lg mb-2 last:mb-0">
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-xs font-bold text-[#5e72e4] uppercase">{raspador.posicion || `Raspador #${index + 1}`}</span>
+    </div>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+      <div><span className="text-slate-400">Tipo:</span> <span className="text-[#32325d]">{raspador.tipo || '-'}</span></div>
+      <div><span className="text-slate-400">Zona Instalación:</span> <span className="text-[#32325d]">{ZONA_INSTALACION_LABELS[raspador.zonaInstalacion] || raspador.zonaInstalacion || '-'}</span></div>
+      {raspador.marcaFabricante && (
+        <div><span className="text-slate-400">Marca/Fabricante:</span> <span className="text-[#32325d]">{raspador.marcaFabricante}</span></div>
+      )}
+    </div>
+  </div>
+);
+
+// Helper to render tambor detail
+const renderTambor = (tambor: any, index: number) => (
+  <div key={index} className="p-3 bg-gray-50 rounded-lg mb-2 last:mb-0">
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-xs font-bold text-[#5e72e4] uppercase">{TIPO_TAMBOR_LABELS[tambor.tipo] || tambor.tipo || `Tambor #${index + 1}`}</span>
+    </div>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+      <div><span className="text-slate-400">Ubicación:</span> <span className="text-[#32325d]">{tambor.ubicacion || '-'}</span></div>
+      <div><span className="text-slate-400">Diámetro:</span> <span className="text-[#32325d]">{tambor.diametro_mm ? `${tambor.diametro_mm} mm` : '-'}</span></div>
+      <div><span className="text-slate-400">Ancho:</span> <span className="text-[#32325d]">{tambor.ancho_mm ? `${tambor.ancho_mm} mm` : '-'}</span></div>
+      <div><span className="text-slate-400">Revestimiento:</span> <span className="text-[#32325d]">{tambor.revestimiento || '-'}</span></div>
+      <div><span className="text-slate-400">Tipo Eje:</span> <span className="text-[#32325d]">{tambor.tipoEje || '-'}</span></div>
+      {tambor.potencia_kW !== undefined && (
+        <div><span className="text-slate-400">Potencia:</span> <span className="text-[#32325d]">{tambor.potencia_kW ? `${tambor.potencia_kW} kW` : '-'}</span></div>
+      )}
+    </div>
+  </div>
+);
 
 const TransportadorDetail: React.FC<TransportadorDetailProps> = ({
   transportadorId,
@@ -434,7 +632,7 @@ const TransportadorDetail: React.FC<TransportadorDetailProps> = ({
             <div>{renderField('Fecha Levantamiento', identity.fechaLevantamiento)}</div>
             <div>{renderField('Usuario', identity.usuario)}</div>
             <div>{renderField('Nivel Confianza', `${identity.nivelConfianza}%`)}</div>
-            <div>{renderField('Fuente', identity.fuenteDato)}</div>
+            <div>{renderField('Fuente', FUENTE_LABELS[identity.fuenteDato] || identity.fuenteDato)}</div>
             {identity.comentarios && <div className="md:col-span-2">{renderField('Comentarios', identity.comentarios)}</div>}
           </div>
         ))}
@@ -447,7 +645,7 @@ const TransportadorDetail: React.FC<TransportadorDetailProps> = ({
             <div>{renderField('Inclinación', `${geometria?.inclinacionPromedio_grados || 0}°`)}</div>
             <div>{renderField('Ancho de Banda', `${geometria?.anchoBanda_mm || 0} mm`)}</div>
             <div>{renderField('Velocidad', `${geometria?.velocidadNominal_ms || 0} m/s`)}</div>
-            <div>{renderField('Perfil', geometria?.perfil || '-')}</div>
+            <div>{renderField('Perfil', PERFIL_LABELS[geometria?.perfil] || geometria?.perfil || '-')}</div>
           </div>
         ))}
 
@@ -470,7 +668,7 @@ const TransportadorDetail: React.FC<TransportadorDetailProps> = ({
             <div>{renderField('Capacidad Nominal', `${capacidad?.capacidadNominal_th || 0} t/h`)}</div>
             <div>{renderField('Capacidad Máxima', `${capacidad?.capacidadMaxima_th || 0} t/h`)}</div>
             <div>{renderField('Factor de Llenado', `${capacidad?.factorLlenado_pct || 0}%`)}</div>
-            <div>{renderField('Régimen', capacidad?.regimenOperacion || '-')}</div>
+            <div>{renderField('Régimen', REGIMEN_LABELS[capacidad?.regimenOperacion] || capacidad?.regimenOperacion || '-')}</div>
           </div>
         ))}
 
@@ -491,57 +689,87 @@ const TransportadorDetail: React.FC<TransportadorDetailProps> = ({
 
         {/* Section 6: Polines */}
         {renderSection('Polines', sectionCompleteness['Polines'] || 0, (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <div className="py-2 border-b border-gray-50">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Polines de Carga</span>
-                <p className="text-sm text-[#32325d] mt-1">
-                  {polines?.polinesCarga?.length || 0} configurados
-                </p>
+          <div className="space-y-4">
+            <div>
+              <div className="py-2 border-b border-gray-50 mb-2">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Polines de Carga ({polines?.polinesCarga?.length || 0})</span>
               </div>
+              {polines?.polinesCarga && polines.polinesCarga.length > 0 ? (
+                polines.polinesCarga.map((polin, index) => renderPolinCarga(polin, index))
+              ) : (
+                <p className="text-sm text-slate-400 italic">No hay polines de carga configurados</p>
+              )}
             </div>
-            <div className="md:col-span-2">
-              <div className="py-2 border-b border-gray-50">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Polines de Retorno</span>
-                <p className="text-sm text-[#32325d] mt-1">
-                  {polines?.polinesRetorno?.length || 0} configurados
-                </p>
+            <div>
+              <div className="py-2 border-b border-gray-50 mb-2">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Polines de Retorno ({polines?.polinesRetorno?.length || 0})</span>
               </div>
+              {polines?.polinesRetorno && polines.polinesRetorno.length > 0 ? (
+                polines.polinesRetorno.map((polin, index) => renderPolinRetorno(polin, index))
+              ) : (
+                <p className="text-sm text-slate-400 italic">No hay polines de retorno configurados</p>
+              )}
             </div>
           </div>
         ))}
 
         {/* Section 7: Zona de Carga */}
         {renderSection('Zona de Carga', sectionCompleteness['Zona de Carga'] || 0, (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>{renderField('Número de Zonas', zonaCarga?.numZonasCarga || 0)}</div>
-            <div>{renderField('Zonas Configuradas', zonaCarga?.zonas?.length || 0)}</div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {renderField('Número de Zonas', zonaCarga?.numZonasCarga || 0)}
+              {renderField('Zonas Configuradas', zonaCarga?.zonas?.length || 0)}
+            </div>
+            <div>
+              <div className="py-2 border-b border-gray-50 mb-2">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Detalle de Zonas</span>
+              </div>
+              {zonaCarga?.zonas && zonaCarga.zonas.length > 0 ? (
+                zonaCarga.zonas.map((zona, index) => renderZonaCarga(zona, index))
+              ) : (
+                <p className="text-sm text-slate-400 italic">No hay zonas de carga configuradas</p>
+              )}
+            </div>
           </div>
         ))}
 
         {/* Section 8: Limpieza */}
         {renderSection('Limpieza', sectionCompleteness['Limpieza'] || 0, (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>{renderField('Limpieza Primaria', limpieza?.limpiezaPrimaria ? 'Sí' : 'No')}</div>
-            <div>{renderField('Limpieza Secundaria', limpieza?.limpiezaSecundaria ? 'Sí' : 'No')}</div>
-            <div>{renderField('Tipo Limpiador', limpieza?.tipoLimpiador || '-')}</div>
-            <div>{renderField('Problema Carryback', limpieza?.problemas?.carryback || '-')}</div>
-            <div>{renderField('Problema Derrames', limpieza?.problemas?.derrames || '-')}</div>
-            <div>{renderField('Acumulación Retorno', limpieza?.problemas?.acumulacionRetorno || '-')}</div>
+          <div className="space-y-4">
+            <div>
+              <div className="py-2 border-b border-gray-50 mb-2">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Raspadores ({limpieza?.raspadores?.length || 0})</span>
+              </div>
+              {limpieza?.raspadores && limpieza.raspadores.length > 0 ? (
+                limpieza.raspadores.map((raspador, index) => renderRaspador(raspador, index))
+              ) : (
+                <p className="text-sm text-slate-400 italic">No hay raspadores configurados</p>
+              )}
+            </div>
+            <div>
+              <div className="py-2 border-b border-gray-50 mb-2">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Problemas Operacionales</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {renderField('Carryback', CARRYBACK_LABELS[limpieza?.problemas?.carryback] || limpieza?.problemas?.carryback || '-')}
+                {renderField('Derrames', DERRAMES_LABELS[limpieza?.problemas?.derrames] || limpieza?.problemas?.derrames || '-')}
+                {renderField('Acumulación en Retorno', ACUMULACION_RETORNO_LABELS[limpieza?.problemas?.acumulacionRetorno] || limpieza?.problemas?.acumulacionRetorno || '-')}
+              </div>
+            </div>
           </div>
         ))}
 
         {/* Section 9: Tambores */}
         {renderSection('Tambores', sectionCompleteness['Tambores'] || 0, (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <div className="py-2 border-b border-gray-50">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tambores Configurados</span>
-                <p className="text-sm text-[#32325d] mt-1">
-                  {tambores?.tambores?.length || 0} tambores
-                </p>
-              </div>
+          <div>
+            <div className="py-2 border-b border-gray-50 mb-2">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tambores Configurados ({tambores?.tambores?.length || 0})</span>
             </div>
+            {tambores?.tambores && tambores.tambores.length > 0 ? (
+              tambores.tambores.map((tambor, index) => renderTambor(tambor, index))
+            ) : (
+              <p className="text-sm text-slate-400 italic">No hay tambores configurados</p>
+            )}
           </div>
         ))}
 

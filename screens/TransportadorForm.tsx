@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Transportador, TransportadorIdentity, TransportadorGeometria, TransportadorMaterial, TransportadorCapacidad, TransportadorCorrea, TransportadorPolines, TransportadorZonaCarga, TransportadorLimpieza, TransportadorTambores, TransportadorAccionamiento, TransportadorTakeUp, TransportadorCurvas, TipoEquipo } from '../types';
+import { Transportador, TransportadorIdentity, TransportadorGeometria, TransportadorMaterial, TransportadorCapacidad, TransportadorCorrea, TransportadorPolines, TransportadorZonaCarga, TransportadorLimpieza, TransportadorTambores, TransportadorAccionamiento, TransportadorTakeUp, TransportadorCurvas } from '../types';
 import TransportadorIdentityForm from '../components/TransportadorIdentityForm';
 import TransportadorGeometriaForm from '../components/TransportadorGeometriaForm';
 import TransportadorMaterialForm from '../components/TransportadorMaterialForm';
@@ -16,7 +16,22 @@ import TransportadorCurvasForm from '../components/TransportadorCurvasForm';
 
 interface TransportadorFormProps {
   transportador?: Transportador | null;
-  onSave: (transportador: Transportador) => void;
+  formData: {
+    identity: TransportadorIdentity;
+    geometria: TransportadorGeometria;
+    material: TransportadorMaterial;
+    capacidad: TransportadorCapacidad;
+    correa: TransportadorCorrea;
+    polines: TransportadorPolines;
+    zonaCarga: TransportadorZonaCarga;
+    limpieza: TransportadorLimpieza;
+    tambores: TransportadorTambores;
+    accionamiento: TransportadorAccionamiento;
+    takeUp: TransportadorTakeUp;
+    curvas: TransportadorCurvas;
+  };
+  onFormDataChange: (section: string, data: any) => void;
+  onSave: () => void;
   onCancel: () => void;
 }
 
@@ -36,110 +51,6 @@ const SECTIONS = [
   { id: 'curvas', label: 'Curvas', icon: '↩️', required: false },
 ];
 
-const createEmptyIdentity = (): TransportadorIdentity => ({
-  cliente: '',
-  clienteNombre: '',
-  faena: '',
-  area: '',
-  codigoTransportador: '',
-  nombreDescriptivo: '',
-  tipoEquipo: TipoEquipo.TRANSPORTADOR_CONVENCIONAL,
-  fechaLevantamiento: new Date().toISOString().split('T')[0],
-  usuario: '',
-  fuenteDato: 'levantamiento_campo',
-  nivelConfianza: 50,
-  comentarios: '',
-});
-
-const createEmptyGeometria = (): TransportadorGeometria => ({
-  longitudTotal_m: 0,
-  elevacionTotal_m: 0,
-  inclinacionPromedio_grados: 0,
-  anchoBanda_mm: 0,
-  velocidadNominal_ms: 0,
-  perfil: 'HORIZONTAL' as any,
-  numTramosInclinados: 0,
-  tramosInclinados: [],
-  tramosHorizontal: [],
-});
-
-const createEmptyMaterial = (): TransportadorMaterial => ({
-  material: '',
-  densidadAparante_tm3: 1.5,
-  tamanoMaxParticula_mm: 0,
-  tamanoMedio_mm: 0,
-  humedad: 'MOIST' as any,
-  fluidez: 'media',
-  abrasividad: 'MODERATE' as any,
-});
-
-const createEmptyCapacidad = (): TransportadorCapacidad => ({
-  capacidadNominal_th: 0,
-  capacidadMaxima_th: 0,
-  factorLlenado_pct: 75,
-  regimenOperacion: 'CONTINUO' as any,
-});
-
-const createEmptyCorrea = (): TransportadorCorrea => ({
-  tipo: 'EP',
-  resistenciaNominal_kNm: 0,
-  numTelasCables: 0,
-  tipoCubiertaSuperior: 'DIN_X',
-  tipoCubiertaInferior: 'DIN_X',
-  espesorCubiertaSup_mm: 0,
-  espesorCubiertaInf_mm: 0,
-  tipoEmpalme: 'Vulcanized' as any,
-  longitudEmpalme_mm: 0,
-});
-
-const createEmptyPolines = (): TransportadorPolines => ({
-  polinesCarga: [],
-  polinesRetorno: [],
-});
-
-const createEmptyZonaCarga = (): TransportadorZonaCarga => ({
-  numZonasCarga: 0,
-  zonas: [],
-});
-
-const createEmptyLimpieza = (): TransportadorLimpieza => ({
-  limpiezaPrimaria: false,
-  limpiezaSecundaria: false,
-  problemas: {
-    carryback: 'LEVEL_I' as any,
-    derrames: 'NONE' as any,
-    acumulacionRetorno: 'NONE' as any,
-  },
-});
-
-const createEmptyTambores = (): TransportadorTambores => ({
-  tambores: [],
-});
-
-const createEmptyAccionamiento = (): TransportadorAccionamiento => ({
-  potenciaInstalada_kW: 0,
-  numMotores: 1,
-  tipoArranque: 'DIRECT_ON_LINE' as any,
-  reductor: '',
-  backstop: false,
-  freno: false,
-});
-
-const createEmptyTakeUp = (): TransportadorTakeUp => ({
-  takeUp: {
-    tipoTakeUp: 'SCREW_TAKEUP' as any,
-    ubicacionTakeUp: 'TAIL' as any,
-    carreraDisponible_m: 1.5,
-  },
-});
-
-const createEmptyCurvas = (): TransportadorCurvas => ({
-  curvasHorizontales: false,
-  radioHorizontal_m: 0,
-  curvasVerticales: false,
-  radioVertical_m: 0,
-});
-
 // Calculate section completeness
 const getSectionCompleteness = (data: any, sectionId: string): number => {
   const sectionFields: Record<string, string[]> = {
@@ -150,7 +61,7 @@ const getSectionCompleteness = (data: any, sectionId: string): number => {
     correa: ['tipo', 'resistenciaNominal_kNm'],
     polines: ['polinesCarga', 'polinesRetorno'],
     zonaCarga: ['numZonasCarga'],
-    limpieza: ['limpiezaPrimaria', 'limpiezaSecundaria'],
+    limpieza: ['raspadores'],
     tambores: ['tambores'],
     accionamiento: ['potenciaInstalada_kW', 'numMotores'],
     takeUp: ['takeUp'],
@@ -171,88 +82,57 @@ const getSectionCompleteness = (data: any, sectionId: string): number => {
 
 const TransportadorForm: React.FC<TransportadorFormProps> = ({
   transportador,
+  formData,
+  onFormDataChange,
   onSave,
   onCancel,
 }) => {
+  console.log('[TransportadorForm] Rendering with formData:', formData?.identity?.codigoTransportador);
+  console.log('[TransportadorForm] Material:', formData?.material?.material);
+  
   const [activeTab, setActiveTab] = useState('identity');
-  const [identity, setIdentity] = useState<TransportadorIdentity>(
-    transportador?.identity || createEmptyIdentity()
-  );
-  const [geometria, setGeometria] = useState<TransportadorGeometria>(
-    transportador?.geometria || createEmptyGeometria()
-  );
-  const [material, setMaterial] = useState<TransportadorMaterial>(
-    transportador?.material || createEmptyMaterial()
-  );
-  const [capacidad, setCapacidad] = useState<TransportadorCapacidad>(
-    transportador?.capacidad || createEmptyCapacidad()
-  );
-  const [correa, setCorrea] = useState<TransportadorCorrea>(
-    transportador?.correa || createEmptyCorrea()
-  );
-  const [polines, setPolines] = useState<TransportadorPolines>(
-    transportador?.polines || createEmptyPolines()
-  );
-  const [zonaCarga, setZonaCarga] = useState<TransportadorZonaCarga>(
-    transportador?.zonaCarga || createEmptyZonaCarga()
-  );
-  const [limpieza, setLimpieza] = useState<TransportadorLimpieza>(
-    transportador?.limpieza || createEmptyLimpieza()
-  );
-  const [tambores, setTambores] = useState<TransportadorTambores>(
-    transportador?.tambores || createEmptyTambores()
-  );
-  const [accionamiento, setAccionamiento] = useState<TransportadorAccionamiento>(
-    transportador?.accionamiento || createEmptyAccionamiento()
-  );
-  const [takeUp, setTakeUp] = useState<TransportadorTakeUp>(
-    transportador?.takeUp || createEmptyTakeUp()
-  );
-  const [curvas, setCurvas] = useState<TransportadorCurvas>(
-    transportador?.curvas || createEmptyCurvas()
-  );
   const [saving, setSaving] = useState(false);
 
   // Calculate overall completeness
   const completeness = useMemo(() => {
     const sections = [
-      { id: 'identity', data: identity },
-      { id: 'geometria', data: geometria },
-      { id: 'material', data: material },
-      { id: 'capacidad', data: capacidad },
-      { id: 'correa', data: correa },
-      { id: 'polines', data: polines },
-      { id: 'zonaCarga', data: zonaCarga },
-      { id: 'limpieza', data: limpieza },
-      { id: 'tambores', data: tambores },
-      { id: 'accionamiento', data: accionamiento },
-      { id: 'takeUp', data: takeUp },
-      { id: 'curvas', data: curvas },
+      { id: 'identity', data: formData.identity },
+      { id: 'geometria', data: formData.geometria },
+      { id: 'material', data: formData.material },
+      { id: 'capacidad', data: formData.capacidad },
+      { id: 'correa', data: formData.correa },
+      { id: 'polines', data: formData.polines },
+      { id: 'zonaCarga', data: formData.zonaCarga },
+      { id: 'limpieza', data: formData.limpieza },
+      { id: 'tambores', data: formData.tambores },
+      { id: 'accionamiento', data: formData.accionamiento },
+      { id: 'takeUp', data: formData.takeUp },
+      { id: 'curvas', data: formData.curvas },
     ];
 
     const total = sections.reduce((acc, s) => acc + getSectionCompleteness(s.data, s.id), 0);
     return Math.round(total / sections.length);
-  }, [identity, geometria, material, capacidad, correa, polines, zonaCarga, limpieza, tambores, accionamiento, takeUp, curvas]);
+  }, [formData]);
 
   // Calculate section completeness for tabs
   const sectionCompleteness = useMemo(() => ({
-    identity: getSectionCompleteness(identity, 'identity'),
-    geometria: getSectionCompleteness(geometria, 'geometria'),
-    material: getSectionCompleteness(material, 'material'),
-    capacidad: getSectionCompleteness(capacidad, 'capacidad'),
-    correa: getSectionCompleteness(correa, 'correa'),
-    polines: getSectionCompleteness(polines, 'polines'),
-    zonaCarga: getSectionCompleteness(zonaCarga, 'zonaCarga'),
-    limpieza: getSectionCompleteness(limpieza, 'limpieza'),
-    tambores: getSectionCompleteness(tambores, 'tambores'),
-    accionamiento: getSectionCompleteness(accionamiento, 'accionamiento'),
-    takeUp: getSectionCompleteness(takeUp, 'takeUp'),
-    curvas: getSectionCompleteness(curvas, 'curvas'),
-  }), [identity, geometria, material, capacidad, correa, polines, zonaCarga, limpieza, tambores, accionamiento, takeUp, curvas]);
+    identity: getSectionCompleteness(formData.identity, 'identity'),
+    geometria: getSectionCompleteness(formData.geometria, 'geometria'),
+    material: getSectionCompleteness(formData.material, 'material'),
+    capacidad: getSectionCompleteness(formData.capacidad, 'capacidad'),
+    correa: getSectionCompleteness(formData.correa, 'correa'),
+    polines: getSectionCompleteness(formData.polines, 'polines'),
+    zonaCarga: getSectionCompleteness(formData.zonaCarga, 'zonaCarga'),
+    limpieza: getSectionCompleteness(formData.limpieza, 'limpieza'),
+    tambores: getSectionCompleteness(formData.tambores, 'tambores'),
+    accionamiento: getSectionCompleteness(formData.accionamiento, 'accionamiento'),
+    takeUp: getSectionCompleteness(formData.takeUp, 'takeUp'),
+    curvas: getSectionCompleteness(formData.curvas, 'curvas'),
+  }), [formData]);
 
   const handleSave = async () => {
     // Basic validation for identity
-    if (!identity.cliente || !identity.faena || !identity.codigoTransportador || !identity.nombreDescriptivo || !identity.usuario) {
+    if (!formData.identity.cliente || !formData.identity.faena || !formData.identity.codigoTransportador || !formData.identity.nombreDescriptivo || !formData.identity.usuario) {
       alert('Por favor completa los campos obligatorios de identificación');
       setActiveTab('identity');
       return;
@@ -260,26 +140,7 @@ const TransportadorForm: React.FC<TransportadorFormProps> = ({
 
     setSaving(true);
     try {
-      const newTransportador: Transportador = {
-        id: transportador?.id || crypto.randomUUID(),
-        identity,
-        geometria,
-        material,
-        capacidad,
-        correa,
-        polines,
-        zonaCarga,
-        limpieza,
-        tambores,
-        accionamiento,
-        takeUp,
-        curvas,
-        estado: transportador?.estado || 'borrador',
-        createdAt: transportador?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        version: transportador?.version ? transportador.version + 1 : 1,
-      };
-      await onSave(newTransportador);
+      onSave();
     } catch (err: any) {
       console.error('Failed to save transportador:', err);
       alert(err.message || 'Error al guardar el transportador');
@@ -291,29 +152,29 @@ const TransportadorForm: React.FC<TransportadorFormProps> = ({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'identity':
-        return <TransportadorIdentityForm identity={identity} onChange={setIdentity} />;
+        return <TransportadorIdentityForm key="identity" identity={formData.identity} onChange={(data) => onFormDataChange('identity', data)} />;
       case 'geometria':
-        return <TransportadorGeometriaForm geometria={geometria} onChange={setGeometria} />;
+        return <TransportadorGeometriaForm key="geometria" geometria={formData.geometria} onChange={(data) => onFormDataChange('geometria', data)} />;
       case 'material':
-        return <TransportadorMaterialForm material={material} onChange={setMaterial} />;
+        return <TransportadorMaterialForm key="material" material={formData.material} onChange={(data) => onFormDataChange('material', data)} />;
       case 'capacidad':
-        return <TransportadorCapacidadForm capacidad={capacidad} onChange={setCapacidad} />;
+        return <TransportadorCapacidadForm key="capacidad" capacidad={formData.capacidad} onChange={(data) => onFormDataChange('capacidad', data)} />;
       case 'correa':
-        return <TransportadorCorreaForm correa={correa} onChange={setCorrea} />;
+        return <TransportadorCorreaForm key="correa" correa={formData.correa} onChange={(data) => onFormDataChange('correa', data)} />;
       case 'polines':
-        return <TransportadorPolinesForm polines={polines} onChange={setPolines} />;
+        return <TransportadorPolinesForm key="polines" polines={formData.polines} onChange={(data) => onFormDataChange('polines', data)} />;
       case 'zonaCarga':
-        return <TransportadorZonaCargaForm zonaCarga={zonaCarga} onChange={setZonaCarga} />;
+        return <TransportadorZonaCargaForm key="zonaCarga" zonaCarga={formData.zonaCarga} onChange={(data) => onFormDataChange('zonaCarga', data)} />;
       case 'limpieza':
-        return <TransportadorLimpiezaForm limpieza={limpieza} onChange={setLimpieza} />;
+        return <TransportadorLimpiezaForm key="limpieza" limpieza={formData.limpieza} onChange={(data) => onFormDataChange('limpieza', data)} />;
       case 'tambores':
-        return <TransportadorTamboresForm tambores={tambores} onChange={setTambores} />;
+        return <TransportadorTamboresForm key="tambores" tambores={formData.tambores} onChange={(data) => onFormDataChange('tambores', data)} />;
       case 'accionamiento':
-        return <TransportadorAccionamientoForm accionamiento={accionamiento} onChange={setAccionamiento} />;
+        return <TransportadorAccionamientoForm key="accionamiento" accionamiento={formData.accionamiento} onChange={(data) => onFormDataChange('accionamiento', data)} />;
       case 'takeUp':
-        return <TransportadorTakeUpForm takeUp={takeUp} onChange={setTakeUp} />;
+        return <TransportadorTakeUpForm key="takeUp" takeUp={formData.takeUp} onChange={(data) => onFormDataChange('takeUp', data)} />;
       case 'curvas':
-        return <TransportadorCurvasForm curvas={curvas} onChange={setCurvas} />;
+        return <TransportadorCurvasForm key="curvas" curvas={formData.curvas} onChange={(data) => onFormDataChange('curvas', data)} />;
       default:
         return null;
     }
@@ -341,9 +202,20 @@ const TransportadorForm: React.FC<TransportadorFormProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="soft-card p-6 mb-6 border-l-4 border-l-[#5e72e4]">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      {/* Header with Back Button for Edit Mode */}
+      <div className="soft-card p-4 mb-4 border-l-4 border-l-[#5e72e4]">
+        {transportador && (
+          <button
+            onClick={onCancel}
+            className="mb-2 flex items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors text-xs sm:text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="hidden sm:inline">Volver</span>
+          </button>
+        )}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div>
             <h3 className="text-xs font-black text-[#32325d] uppercase tracking-[0.2em]">
               {transportador ? 'Editar Transportador' : 'Nuevo Transportador'}
@@ -354,29 +226,29 @@ const TransportadorForm: React.FC<TransportadorFormProps> = ({
           </div>
           
           {/* Progress Indicator */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="text-right">
-              <span className="text-2xl font-black text-[#32325d]">{completeness}%</span>
-              <p className="text-[9px] text-slate-400 uppercase tracking-wider">Completado</p>
+              <span className="text-xl sm:text-2xl font-black text-[#32325d]">{completeness}%</span>
+              <p className="text-[9px] text-slate-400 uppercase tracking-wider hidden sm:block">Completado</p>
             </div>
-            <div className="relative w-16 h-16">
+            <div className="relative w-12 h-12 sm:w-16 sm:h-16">
               <svg className="w-full h-full transform -rotate-90">
                 <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
+                  cx="24"
+                  cy="24"
+                  r="20"
                   stroke="#e2e8f0"
-                  strokeWidth="4"
+                  strokeWidth="3"
                   fill="none"
                 />
                 <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
+                  cx="24"
+                  cy="24"
+                  r="20"
                   stroke={completeness === 100 ? '#2dce89' : completeness >= 50 ? '#fb6340' : '#f5365c'}
-                  strokeWidth="4"
+                  strokeWidth="3"
                   fill="none"
-                  strokeDasharray={`${completeness * 1.76} 176`}
+                  strokeDasharray={`${completeness * 1.25} 125`}
                   strokeLinecap="round"
                   className="transition-all duration-500"
                 />
@@ -416,15 +288,28 @@ const TransportadorForm: React.FC<TransportadorFormProps> = ({
       </div>
 
       {/* Form Content */}
-      <div className="soft-card p-6 animate-in fade-in duration-300">
+      <div className="soft-card p-4 sm:p-6 animate-in fade-in duration-300">
         <div className="mb-4 flex items-center justify-between">
           <h4 className="text-sm font-bold text-[#32325d] flex items-center gap-2">
             <span className="text-lg">{SECTIONS.find(s => s.id === activeTab)?.icon}</span>
-            {SECTIONS.find(s => s.id === activeTab)?.label}
+            <span className="truncate">{SECTIONS.find(s => s.id === activeTab)?.label}</span>
           </h4>
-          <span className="text-xs text-slate-400">
-            {currentIndex + 1} de {SECTIONS.length}
-          </span>
+          <div className="flex items-center gap-2">
+            {/* Quick Save Button in Header */}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="text-slate-400 hover:text-[#5e72e4] transition-colors p-1.5 rounded-lg hover:bg-gray-100"
+              title="Guardar"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+            </button>
+            <span className="text-xs text-slate-400">
+              {currentIndex + 1}/{SECTIONS.length}
+            </span>
+          </div>
         </div>
         
         {/* Progress Bar */}
@@ -437,66 +322,75 @@ const TransportadorForm: React.FC<TransportadorFormProps> = ({
 
         {renderTabContent()}
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
+        {/* Navigation Buttons - Mobile Optimized */}
+        <div className="flex flex-wrap justify-center gap-3 mt-6 pt-4 border-t border-gray-100 px-2">
+          {/* Previous Button */}
           <button
             onClick={handlePrevTab}
             disabled={currentIndex === 0}
-            className={`px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-[0.15em] transition-all flex items-center gap-2 ${
+            className={`flex items-center justify-center gap-1 sm:gap-2 min-w-[48px] px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-[10px] uppercase tracking-[0.1em] transition-all ${
               currentIndex === 0
                 ? 'bg-gray-100 text-slate-300 cursor-not-allowed'
                 : 'bg-gray-100 text-slate-600 hover:bg-gray-200'
             }`}
+            title="Anterior"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Anterior
+            <span className="hidden sm:inline">Anterior</span>
           </button>
 
-          <div className="flex items-center gap-3">
+          {/* Cancel Button - Red */}
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            className="flex items-center justify-center gap-1 min-w-[48px] px-3 sm:px-4 py-2.5 sm:py-3 bg-red-500 text-white rounded-xl font-bold text-xs sm:text-[10px] uppercase tracking-[0.1em] hover:bg-red-600 transition-all disabled:opacity-50"
+            title="Cancelar"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="hidden sm:inline">Cancelar</span>
+          </button>
+
+          {/* Next or Save Button */}
+          {currentIndex < SECTIONS.length - 1 ? (
             <button
-              onClick={onCancel}
-              disabled={saving}
-              className="px-6 py-3 bg-gray-100 text-slate-600 rounded-xl font-bold text-[10px] uppercase tracking-[0.15em] hover:bg-gray-200 transition-all disabled:opacity-50"
+              onClick={handleNextTab}
+              className="flex items-center justify-center gap-1 sm:gap-2 min-w-[48px] px-3 sm:px-4 py-2.5 sm:py-3 bg-[#5e72e4] text-white rounded-xl font-bold text-xs sm:text-[10px] uppercase tracking-[0.1em] shadow-lg hover:shadow-xl transition-all"
+              title="Siguiente"
             >
-              Cancelar
+              <span className="hidden sm:inline">Siguiente</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
-            {currentIndex < SECTIONS.length - 1 ? (
-              <button
-                onClick={handleNextTab}
-                className="px-6 py-3 bg-[#5e72e4] text-white rounded-xl font-bold text-[10px] uppercase tracking-[0.15em] shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-              >
-                Siguiente
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            ) : (
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-6 py-3 bg-[#2dce89] text-white rounded-xl font-bold text-[10px] uppercase tracking-[0.15em] shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Guardar Transportador
-                  </>
-                )}
-              </button>
-            )}
-          </div>
+          ) : (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center justify-center gap-2 min-w-[48px] px-4 sm:px-6 py-3 sm:py-4 bg-[#5e72e4] text-white rounded-xl font-bold text-xs sm:text-[10px] uppercase tracking-[0.1em] shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              title="Guardar Evaluación"
+            >
+              {saving ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span className="hidden sm:inline">Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  <span className="hidden sm:inline">Guardar</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

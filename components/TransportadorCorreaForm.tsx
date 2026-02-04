@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TransportadorCorrea, SpliceType, SpliceType as SpliceTypeEnum, GradoCubiertaST, EspesorCubiertaMetrico } from '../types';
+import { TransportadorCorrea, SpliceType, SpliceType as SpliceTypeEnum, TipoCubiertaSuperiorInferior } from '../types';
 
 interface TransportadorCorreaFormProps {
   correa: TransportadorCorrea;
@@ -12,8 +12,18 @@ const SPLICE_OPTIONS = Object.values(SpliceTypeEnum).map(value => ({
   label: value
 }));
 
-const GRADO_CUBIERTA_ST = Object.values(GradoCubiertaST);
-const ESPESOR_CUBIERTA_M = Object.values(EspesorCubiertaMetrico);
+const TIPO_CUBIERTA_OPCIONES: TipoCubiertaSuperiorInferior[] = [
+  'DIN X (Alta resistencia a abrasión. Uso en minería severa y materiales altamente abrasivos).',
+  'DIN Y (Resistencia media a abrasión. Uso industrial general).',
+  'DIN Z (Servicio liviano. Materiales poco abrasivos).',
+  'RMA 1',
+  'RMA 2',
+  'OIL RESISTANT (Compuesto resistente a aceites, grasas e hidrocarburos).',
+  'HEAT RESISTANT (Diseñada para transporte de material a alta temperatura).',
+  'DIN K (Cubierta retardante al fuego para aplicaciones con requisitos de seguridad.).',
+  'CHEMICAL RESISTANT (Resistente a ambientes o materiales químicamente agresivos).',
+  'FOOD GRADE (Cumple requisitos sanitarios para aplicaciones alimentarias).',
+];
 
 const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
   correa,
@@ -27,7 +37,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
   };
 
   const parseEspesor = (value: string): number => {
-    const match = value.match(/\\((\\d+)mm\\)/);
+    const match = value.match(/\((\d+)mm\)/);
     return match ? parseInt(match[1]) : 0;
   };
 
@@ -64,39 +74,114 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
               <option value="ST">ST (Cables de Acero)</option>
             </select>
           </div>
-
-          {/* Resistencia Nominal */}
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Resistencia Nominal (kN/m)
-            </label>
-            <input
-              type="number"
-              step="1"
-              min="0"
-              value={correa.resistenciaNominal_kNm}
-              onChange={(e) => handleChange('resistenciaNominal_kNm', parseFloat(e.target.value) || 0)}
-              className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
-            />
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          {/* Número de Telas/Cables */}
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Número de Telas (EP) / Cables (ST)
-            </label>
-            <input
-              type="number"
-              step="1"
-              min="0"
-              value={correa.numTelasCables}
-              onChange={(e) => handleChange('numTelasCables', parseInt(e.target.value) || 0)}
-              className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
-            />
-          </div>
+        {/* Campos específicos para EP */}
+        {correa.tipo === 'EP' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            {/* Resistencia Nominal */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                Resistencia Nominal (kN/m)
+              </label>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                value={correa.resistenciaNominal_kNm}
+                onChange={(e) => handleChange('resistenciaNominal_kNm', parseFloat(e.target.value) || 0)}
+                className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
+              />
+            </div>
 
+            {/* Número de Telas */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                Número de Telas (EP)
+              </label>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                value={correa.numTelasCables}
+                onChange={(e) => handleChange('numTelasCables', parseInt(e.target.value) || 0)}
+                className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Campos específicos para ST */}
+        {correa.tipo === 'ST' && (
+          <div className="space-y-6 mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Resistencia ST */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Resistencia ST (kN/m) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={correa.resistenciaST_kN_m || ''}
+                  onChange={(e) => handleChange('resistenciaST_kN_m', parseFloat(e.target.value) || 0)}
+                  className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
+                />
+              </div>
+
+              {/* Número de Cables */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Número de Cables (ST)
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={correa.numTelasCables}
+                  onChange={(e) => handleChange('numTelasCables', parseInt(e.target.value) || 0)}
+                  className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Paso Cable */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Paso Cable (mm)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={correa.pasoCable_mm || ''}
+                  onChange={(e) => handleChange('pasoCable_mm', parseFloat(e.target.value) || 0)}
+                  className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
+                />
+              </div>
+
+              {/* Diámetro Cable */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Diámetro Cable (mm)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={correa.diametroCable_mm || ''}
+                  onChange={(e) => handleChange('diametroCable_mm', parseFloat(e.target.value) || 0)}
+                  className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Campos comunes EP y ST - Cubiertas */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           {/* Espesor Cubierta Superior */}
           <div className="space-y-2">
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -111,57 +196,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
               className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          {/* Tipo Cubierta Superior */}
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Grado Cubierta Superior
-            </label>
-            <select
-              value={correa.tipoCubiertaSuperior}
-              onChange={(e) => handleChange('tipoCubiertaSuperior', e.target.value)}
-              className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all cursor-pointer"
-            >
-              <optgroup label="Clasificación ST (Cables de Acero)">
-                {GRADO_CUBIERTA_ST.map(grado => (
-                  <option key={grado} value={grado}>{grado}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Clasificación M (Métrico)">
-                {ESPESOR_CUBIERTA_M.map(grado => (
-                  <option key={grado} value={grado}>{grado}</option>
-                ))}
-              </optgroup>
-            </select>
-          </div>
-
-          {/* Tipo Cubierta Inferior */}
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Grado Cubierta Inferior
-            </label>
-            <select
-              value={correa.tipoCubiertaInferior}
-              onChange={(e) => handleChange('tipoCubiertaInferior', e.target.value)}
-              className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all cursor-pointer"
-            >
-              <optgroup label="Clasificación ST (Cables de Acero)">
-                {GRADO_CUBIERTA_ST.map(grado => (
-                  <option key={grado} value={grado}>{grado}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Clasificación M (Métrico)">
-                {ESPESOR_CUBIERTA_M.map(grado => (
-                  <option key={grado} value={grado}>{grado}</option>
-                ))}
-              </optgroup>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           {/* Espesor Cubierta Inferior */}
           <div className="space-y-2">
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -175,6 +210,40 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
               onChange={(e) => handleChange('espesorCubiertaInf_mm', parseFloat(e.target.value) || 0)}
               className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          {/* Tipo Cubierta Superior */}
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Grado Cubierta Superior
+            </label>
+            <select
+              value={correa.tipoCubiertaSuperior}
+              onChange={(e) => handleChange('tipoCubiertaSuperior', e.target.value as TipoCubiertaSuperiorInferior)}
+              className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all cursor-pointer"
+            >
+              {TIPO_CUBIERTA_OPCIONES.map(opcion => (
+                <option key={opcion} value={opcion}>{opcion}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Tipo Cubierta Inferior */}
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Grado Cubierta Inferior
+            </label>
+            <select
+              value={correa.tipoCubiertaInferior}
+              onChange={(e) => handleChange('tipoCubiertaInferior', e.target.value as TipoCubiertaSuperiorInferior)}
+              className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all cursor-pointer"
+            >
+              {TIPO_CUBIERTA_OPCIONES.map(opcion => (
+                <option key={opcion} value={opcion}>{opcion}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

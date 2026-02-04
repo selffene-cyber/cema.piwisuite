@@ -8,22 +8,22 @@ interface TransportadorPolinesFormProps {
 }
 
 const TIPO_POLIN_CARGA_OPCIONES: TipoPolinCarga[] = [
-  'TROUGHING_STANDARD',
-  'IMPACT_IDLER',
-  'TRAINING_IDLER',
-  'OFFSET_TROUGHING',
-  'EQUAL_TROUGHING',
-  'PICKUP_IDLER',
-  'TRANSITION_IDLER'
+  'TROUGHING_STANDARD (Polín de carga estándar con rodillos en artesa)',
+  'IMPACT_IDLER (Polín de impacto con rodillos amortiguados con anillos de goma)',
+  'TRAINING_IDLER (Polín de carga autoalineante. Usado como elemento correctivo para problemas de tracking)',
+  'OFFSET_TROUGHING (Polín de carga con rodillos desplazados. Aplicaciones especiales de transición o geometría particular)',
+  'EQUAL_TROUGHING (Polín de carga con rodillos laterales iguales)',
+  'PICKUP_IDLER (olín ubicado inmediatamente después de la zona de carga, diseñado para estabilizar la correa cargada)',
+  'TRANSITION_IDLER (Polín usado en zonas de transición entre tambor plano y artesa)'
 ];
 
 const TIPO_RETORNO_OPCIONES: TipoRetorno[] = [
-  'FLAT_RETURN',
-  'V_RETURN',
-  'TRAINING_RETURN',
-  'RUBBER_DISK_RETURN',
-  'SPIRAL_RETURN',
-  'IMPACT_RETURN'
+  'FLAT_RETURN (Retorno plano con un solo rodillo horizontal)',
+  'V_RETURN (Retorno en V (normalmente 10°–15° por lado))',
+  'TRAINING_RETURN (Polín de retorno autoalineante)',
+  'RUBBER_DISK_RETURN (Rodillo de retorno con discos de goma)',
+  'SPIRAL_RETURN (Rodillo de retorno espiralado)',
+  'IMPACT_RETURN (Retorno reforzado para zonas con caída de material o limpieza agresiva)'
 ];
 
 // ClaseCEMA es un enum,，所以我们需要使用enum值
@@ -34,11 +34,11 @@ const createEmptyPolinCarga = (): PolinCarga => ({
   claseCEMA: 'C' as ClaseCEMA,
   diametroRodillo_mm: 108,
   espaciamiento_m: 1.0,
-  tipo: 'TROUGHING_STANDARD',
+  tipo: 'TROUGHING_STANDARD (Polín de carga estándar con rodillos en artesa)',
 });
 
 const createEmptyPolinRetorno = (): PolinRetorno => ({
-  tipo: 'FLAT_RETURN',
+  tipo: 'FLAT_RETURN (Retorno plano con un solo rodillo horizontal)',
   espaciamiento_m: 2.0,
   diametroRodillo_mm: 108,
 });
