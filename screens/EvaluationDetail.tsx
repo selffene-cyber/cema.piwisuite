@@ -35,6 +35,7 @@ const EvaluationDetail: React.FC<EvaluationDetailProps> = ({ evaluationId, onBac
   const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [wasDeleted, setWasDeleted] = useState(false);
   const chartRef = useRef<any>(null);
 
   const handleDownloadPDF = async () => {
@@ -89,8 +90,12 @@ const EvaluationDetail: React.FC<EvaluationDetailProps> = ({ evaluationId, onBac
     try {
       setDeleting(true);
       await evaluationsApi.deleteById(evaluationId);
+      setWasDeleted(true);
       setShowDeleteModal(false);
-      onBack();
+      // Small delay to ensure state is updated before navigating
+      setTimeout(() => {
+        onBack();
+      }, 0);
     } catch (err: any) {
       console.error('Failed to delete evaluation:', err);
       setError(err.message || 'Error al eliminar la evaluación');
@@ -152,81 +157,115 @@ const EvaluationDetail: React.FC<EvaluationDetailProps> = ({ evaluationId, onBac
     );
   }
 
-  const isCritical = evaluation.severityClass > 3;
+  // If wasDeleted, show success message and navigate back
+  if (wasDeleted) {
+    return (
+      <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
+        <div className="soft-card p-10 text-center">
+          <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-[#2dce89]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-black text-[#32325d] mb-2">Evaluación eliminada</h2>
+          <p className="text-slate-400 font-semibold text-sm mb-6">La evaluación ha sido eliminada correctamente.</p>
+          <button
+            onClick={onBack}
+            className="px-8 py-3 bg-[#5e72e4] text-white rounded-xl font-bold text-[10px] uppercase tracking-[0.15em] shadow-lg hover:bg-[#435ad8] transition-all"
+          >
+            Volver al Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const isCritical = evaluation?.severityClass > 3;
   
   // Calculate breakdown scores from stored evaluation data
-  const breakdown = calculateScores(
+  const breakdown = evaluation ? calculateScores(
     evaluation.beltWidthValue,
     evaluation.beltSpeedValue,
     evaluation.spliceType,
     evaluation.abrasiveness,
     evaluation.moisture
-  );
+  ) : null;
 
   return (
     <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-6 duration-500">
       {/* Header Card */}
-      <div className="soft-card p-6 lg:p-8 border-l-4 mb-6" style={{ borderLeftColor: isCritical ? '#f5365c' : '#2dce89' }}>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-3">
-              <button
-                onClick={onBack}
-                className="p-2 text-slate-400 hover:text-[#5e72e4] transition-colors rounded-lg hover:bg-gray-50"
-                title="Volver al Dashboard"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <h3 className="text-xs font-black text-[#5e72e4] uppercase tracking-[0.2em]">Detalle de Evaluación</h3>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleDownloadPDF}
-                className="p-2 text-slate-400 hover:text-[#2dce89] transition-colors rounded-lg hover:bg-green-50"
-                title="Descargar PDF"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="p-2 text-slate-400 hover:text-[#f5365c] transition-colors rounded-lg hover:bg-red-50"
-                title="Eliminar evaluación"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
-            <h1 className="text-2xl font-extrabold text-[#32325d] truncate tracking-tight">{evaluation.clientName}</h1>
-            <div className="flex items-center space-x-3 mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              <span className="bg-gray-50 px-3 py-1 rounded border border-gray-100">{evaluation.tag}</span>
-              <span className="opacity-30">•</span>
-              <span>{new Date(evaluation.timestamp).toLocaleString()}</span>
-            </div>
-            <div className="flex items-center space-x-3 mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              <span className="bg-gray-50 px-3 py-1 rounded border border-gray-100">{evaluation.faena}</span>
-              <span className="opacity-30">•</span>
-              <span className="bg-gray-50 px-3 py-1 rounded border border-gray-100">
-                {evaluation.tipo_correa_valor && `${evaluation.tipo_correa_valor} `}({evaluation.tipo_correa})
-              </span>
-              <span className="opacity-30">•</span>
-              <span className="bg-gray-50 px-3 py-1 rounded border border-gray-100">{evaluation.capacidad}</span>
-            </div>
+      <div className="soft-card p-6 lg:p-8 border-l-4 mb-6 relative" style={{ borderLeftColor: isCritical ? '#f5365c' : '#2dce89' }}>
+        {/* Row 1: Date/time aligned right */}
+        <div className="flex justify-end mb-2">
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            {new Date(evaluation.timestamp).toLocaleString()}
+          </span>
+        </div>
+
+        {/* Row 2: Back button + Title */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={onBack}
+            className="p-2 text-slate-400 hover:text-[#5e72e4] transition-colors rounded-lg hover:bg-gray-50"
+            title="Volver al Dashboard"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h3 className="text-xs font-black text-[#5e72e4] uppercase tracking-[0.2em]">Detalle de Evaluación</h3>
+        </div>
+
+        {/* Row 3: Action icons aligned right */}
+        <div className="flex justify-end mb-6">
+          <div className="flex gap-1">
+            <button
+              onClick={handleDownloadPDF}
+              className="p-2 text-slate-400 hover:text-[#2dce89] transition-colors rounded-lg hover:bg-green-50"
+              title="Descargar PDF"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="p-2 text-slate-400 hover:text-[#f5365c] transition-colors rounded-lg hover:bg-red-50"
+              title="Eliminar evaluación"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           </div>
-          <div className="flex flex-col items-end">
-            <span className={`text-3xl font-black px-6 py-3 rounded-2xl border-2 ${
-              isCritical 
-              ? 'text-[#f5365c] border-[#f5365c]/10 bg-[#f5365c]/5' 
-              : 'text-[#2dce89] border-[#2dce89]/10 bg-[#2dce89]/5'
-            }`}>
-              C{evaluation.severityClass}
-            </span>
-            <span className="text-[10px] font-black text-slate-300 mt-2 uppercase tracking-tighter">{evaluation.totalScore} Puntos</span>
-          </div>
+        </div>
+
+        {/* Client Name */}
+        <h1 className="text-2xl font-extrabold text-[#32325d] truncate tracking-tight mb-3">{evaluation.clientName}</h1>
+        
+        {/* Tags Row */}
+        <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-6">
+          <span className="bg-gray-50 px-3 py-1 rounded border border-gray-100">{evaluation.tag}</span>
+          <span className="opacity-30">•</span>
+          <span className="bg-gray-50 px-3 py-1 rounded border border-gray-100">{evaluation.faena}</span>
+          <span className="opacity-30">•</span>
+          <span className="bg-gray-50 px-3 py-1 rounded border border-gray-100">
+            {evaluation.tipo_correa_valor && `${evaluation.tipo_correa_valor} `}({evaluation.tipo_correa})
+          </span>
+          <span className="opacity-30">•</span>
+          <span className="bg-gray-50 px-3 py-1 rounded border border-gray-100">{evaluation.capacidad_valor} {evaluation.capacidad}</span>
+        </div>
+
+        {/* Centered Severity Class and Points */}
+        <div className="flex flex-col items-center justify-center py-4 mb-6">
+          <span className={`text-4xl font-black px-8 py-4 rounded-2xl border-2 ${
+            isCritical 
+            ? 'text-[#f5365c] border-[#f5365c]/10 bg-[#f5365c]/5' 
+            : 'text-[#2dce89] border-[#2dce89]/10 bg-[#2dce89]/5'
+          }`}>
+            C{evaluation.severityClass}
+          </span>
+          <span className="text-[10px] font-black text-slate-300 mt-2 uppercase tracking-tighter">{evaluation.totalScore} Puntos</span>
         </div>
 
         {/* Sistema Information */}
@@ -239,7 +278,7 @@ const EvaluationDetail: React.FC<EvaluationDetailProps> = ({ evaluationId, onBac
             </span>
             <h2 className="text-[12px] font-black text-[#32325d] uppercase tracking-[0.2em]">Información del Sistema</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex justify-between items-center">
               <div className="flex flex-col">
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Tipo de Correa</span>
@@ -261,6 +300,17 @@ const EvaluationDetail: React.FC<EvaluationDetailProps> = ({ evaluationId, onBac
               <div className="w-16 h-16 rounded-full flex items-center justify-center bg-green-50">
                 <svg className="w-6 h-6 text-[#2dce89]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Material</span>
+                <span className="text-sm font-bold text-[#32325d] mt-1">{evaluation.tipo_material}</span>
+              </div>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center bg-purple-50">
+                <svg className="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                 </svg>
               </div>
             </div>

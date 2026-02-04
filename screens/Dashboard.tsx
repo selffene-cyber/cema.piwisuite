@@ -304,7 +304,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                   <div className="space-y-1">
                     <span className="text-slate-400 block uppercase text-[8px] tracking-widest opacity-60">Capacidad</span>
-                    <span className="text-[#32325d] font-extrabold">{evalItem.capacidad}</span>
+                    <span className="text-[#32325d] font-extrabold">{evalItem.capacidad_valor} {evalItem.capacidad}</span>
                   </div>
                 </div>
                 

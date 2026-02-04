@@ -40,46 +40,50 @@ const Layout: React.FC<LayoutProps> = ({ children, title, onLogout, activeModule
 
       {/* Sidebar */}
       <aside className={`w-64 sidebar flex flex-col fixed h-full z-[100] ${isSidebarOpen ? 'open' : ''}`}>
-        <div className="p-8 mb-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-[#5e72e4] rounded flex items-center justify-center font-extrabold text-white text-sm">
-              C
+        <div className="flex flex-col h-full justify-between">
+          <div>
+            <div className="p-8 mb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-[#5e72e4] rounded flex items-center justify-center font-extrabold text-white text-sm">
+                  C
+                </div>
+                <span className="text-[#32325d] font-extrabold text-sm tracking-tight uppercase">Asistente CEMA</span>
+              </div>
             </div>
-            <span className="text-[#32325d] font-extrabold text-sm tracking-tight uppercase">Asistente CEMA</span>
+
+            <nav className="lg:max-h-[calc(100vh-200px)] overflow-y-auto">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveModule(item.id);
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full text-left px-8 py-4 transition-all text-[11px] font-extrabold tracking-widest ${
+                    activeModule === item.id 
+                    ? 'active-menu-item' 
+                    : 'text-slate-400 hover:text-slate-600 border-r-4 border-transparent'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
           </div>
+
+          {user && (
+            <div className="p-8 border-t border-gray-100 flex-shrink-0">
+              <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black mb-1">Usuario Activo</p>
+              <p className="text-[#32325d] text-xs font-bold truncate">{user.name}</p>
+              <button 
+                onClick={onLogout}
+                className="mt-4 text-[9px] font-black text-red-500 hover:text-red-700 transition-colors uppercase tracking-widest"
+              >
+                SALIR DEL SISTEMA
+              </button>
+            </div>
+          )}
         </div>
-
-        <nav className="flex-1">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveModule(item.id);
-                setSidebarOpen(false);
-              }}
-              className={`w-full text-left px-8 py-4 transition-all text-[11px] font-extrabold tracking-widest ${
-                activeModule === item.id 
-                ? 'active-menu-item' 
-                : 'text-slate-400 hover:text-slate-600 border-r-4 border-transparent'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
-        {user && (
-          <div className="p-8 border-t border-gray-100">
-            <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black mb-1">Usuario Activo</p>
-            <p className="text-[#32325d] text-xs font-bold truncate">{user.name}</p>
-            <button 
-              onClick={onLogout}
-              className="mt-4 text-[9px] font-black text-red-500 hover:text-red-700 transition-colors uppercase tracking-widest"
-            >
-              SALIR DEL SISTEMA
-            </button>
-          </div>
-        )}
       </aside>
 
       {/* Main Content */}
