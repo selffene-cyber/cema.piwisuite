@@ -5,7 +5,12 @@
 
 La aplicación permite digitalizar el proceso de evaluación, eliminando el uso de papel y centralizando el historial de inspecciones con marca de tiempo y datos técnicos precisos.
 
+**Módulos Principales:**
+- **CEMA 576**: Evaluación de severidad en sistemas de limpieza de bandas transportadoras.
+- **Maestro de Transportadores**: Gestión integral de datos técnicos de transportadores (geometría, correa, polines, zonas de carga, limpieza, tambores, accionamiento, take-up, curvas).
+
 ---
+
 
 ## 2. Tecnologías y Librerías
 La aplicación está construida utilizando un stack moderno enfocado en el rendimiento y la mantenibilidad:
@@ -15,8 +20,10 @@ La aplicación está construida utilizando un stack moderno enfocado en el rendi
 - **Tailwind CSS**: Framework de utilidades CSS para un diseño altamente personalizado, rápido y consistente.
 - **Google Gemini API (@google/genai)**: Preparada para futuras integraciones de análisis inteligente o procesamiento de lenguaje natural.
 - **PWA (Progressive Web App)**: Configurada para funcionar como una aplicación nativa en dispositivos móviles, permitiendo el acceso rápido y una experiencia fluida.
+- **Chart.js / react-chartjs-2**: Gráficos interactivos (radar, líneas) para visualización de datos técnicos.
 
 ---
+
 
 ## 3. Filosofía de Diseño: Mobile-First & Full Responsive
 La aplicación ha sido diseñada bajo la estrategia **Mobile-First**:
@@ -27,35 +34,81 @@ La aplicación ha sido diseñada bajo la estrategia **Mobile-First**:
 
 ---
 
+
 ## 4. Funcionalidades del Sistema
-- **Login de Usuario**: Acceso seguro para personal autorizado.
-- **Dashboard de Inicio**:
-    - Acceso rápido a módulos.
-    - Gráfico de actividad con filtros por período (Día, Semana, Mes, Año) y módulo.
-    - Resumen histórico de las últimas evaluaciones.
-- **Módulo CEMA 576**:
-    - Historial completo de evaluaciones por cliente y tag.
-    - Formulario de evaluación en 3 pasos (Identificación, Datos Técnicos, Condiciones del Material).
-    - **Toggle Vista Lista/Tarjeta**: Cambiar entre visualización en lista o tarjetas en el historial.
-    - **Filtros Avanzados**: Filtrar por nombre de cliente, clase de severidad, rango de fechas y ancho de banda.
-    - **Vista de Detalle**: Página de detalle con gráfico radar y información completa de la evaluación.
-    - **Eliminar Evaluación**: Funcionalidad de eliminación con modal de confirmación.
-- **Cálculo de Severidad**: Motor de cálculo automático que determina la **Clase de Severidad (C1 a C5)**.
+
+### 4.1 Módulo CEMA 576
+- **Historial de Evaluaciones**: Lista completa de evaluaciones con filtros por cliente, tag, clase de severidad y fechas.
+- **Formulario de Evaluación**: Proceso en 3 pasos (Identificación, Datos Técnicos, Condiciones del Material).
+- **Cálculo de Severidad**: Motor de cálculo automático que determina la **Clase de Severidad (C1-C5)** según estándar CEMA 576.
+- **Gráfico Radar**: Visualización de las 5 variables de severidad (Ancho, Velocidad, Empalme, Abrasividad, Humedad).
+- **Generación de PDF**: Exportación de evaluaciones en formato PDF.
+
+### 4.2 Módulo Maestro de Transportadores (Nuevo)
+El módulo de Maestro de Transportadores permite la gestión integral de datos técnicos de transportadores industriales.
+
+#### 4.2.1 Secciones del Formulario
+| # | Sección | Descripción |
+|---|---------|-------------|
+| 1 | **Identidad** | Código transportador, nombre descriptivo, cliente, faena, área, fecha levantamiento |
+| 2 | **Geometría** | Longitud total, elevación, inclinación, ancho banda, velocidad nominal, perfil |
+| 3 | **Material** | Tipo material, densidad aparente, tamaño partículas, humedad, abrasividad |
+| 4 | **Capacidad** | Capacidad nominal/máxima, factor llenado, régimen operación |
+| 5 | **Correa** | Tipo correa, resistencia nominal, cubiertas (superior/inferior), espesores, empalme |
+| 6 | **Polines** | Polines de carga y retorno (múltiples estaciones configurables) |
+| 7 | **Zona de Carga** | Zonas de carga con altura caída, tipo descarga, cama impacto dinámica |
+| 8 | **Limpieza** | Sistema de raspadores (múltiples por posición) y problemas operacionales |
+| 9 | **Tambores** | Configuración de tambores (drive, tail, snub, bend, etc.) |
+| 10 | **Accionamiento** | Potencia instalada, número motores, tipo arranque, reductor |
+| 11 | **Take-Up** | Tipo y ubicación del sistema tensor |
+| 12 | **Curvas** | Curvas horizontales y verticales con radios |
+
+#### 4.2.2 Características del Formulario
+- **Navegación por Pestañas**: 12 pestañas para organización de datos
+- **Persistencia de Estado**: Los cambios se preservan al navegar entre pestañas
+- **Campos Dinámicos**: Secciones como Zona de Carga y Limpieza permiten agregar múltiples elementos
+- **Indicador de Progreso**: Barra de progreso circular mostrando % de completitud
+- **Edición y Duplicación**: Posibilidad de editar o duplicar transportadores existentes
+
+#### 4.2.3 Vista de Detalle
+La página de detalle muestra información completa del transportador:
+- Header con datos principales (código, nombre, cliente, faena)
+- Secciones expandibles con progreso de completitud
+- Detalle completo de cada sección (polines, zonas, raspadores, tambores)
+- Exportación a JSON
+- Botones de editar, duplicar y eliminar
 
 ---
 
+
 ## 5. Lógica y Variables Técnicas
+
+### 5.1 CEMA 576 - Score de Severidad
 El corazón de la aplicación utiliza las siguientes variables para determinar el score de severidad:
 
 | Variable | Descripción | Impacto en Score |
-| :--- | :--- | :--- |
+|----------|-------------|------------------|
 | **Ancho de Banda** | De 18" hasta 120" | A mayor ancho, mayor score. |
 | **Velocidad** | Medida en FPM (Feet Per Minute) | Velocidades altas aumentan la severidad. |
 | **Tipo de Empalme** | Vulcanizado vs Mecánico | Los empalmes mecánicos penalizan el score. |
 | **Abrasividad** | Índice de abrasividad del material | Escala según el tipo de mineral. |
 | **Humedad** | Estado del material (Seco, Húmedo, Wet, Slurry) | La humedad crítica (sticky) eleva el score. |
 
+### 5.2 Campos Dinámicos - Zona de Carga
+La sección de Zona de Carga incluye campos dinámicos según el tipo de cama de impacto:
+
+| Tipo Cama Impacto | Campo Adicional |
+|-------------------|-----------------|
+| IMPACT_IDLER_SET | Número de Polines de Impacto |
+| SLIDER_BED | Largo Cama Deslizante |
+| IMPACT_CRADLE / IMPACT_CRADLE_WITH_CENTER_ROLL | Número de Estaciones |
+
+**Campos comunes:**
+- Largo Zona de Impacto (mm, m, in, ft)
+- Marca / Fabricante (opcional)
+
 ---
+
 
 ## 6. Estado de Desarrollo
 - [x] Login Funcional
@@ -69,10 +122,18 @@ El corazón de la aplicación utiliza las siguientes variables para determinar e
 - [x] Eliminación con Confirmación
 - [x] Gráfico con Filtros de Período
 - [x] Deployment Unified (Worker + Static Files)
-- [ ] Análisis de Impacto (En construcción)
-- [ ] Calculadora Técnica (En construcción)
+- [x] **Módulo Maestro de Transportadores (NUEVO)**
+  - [x] Formulario completo de 12 secciones
+  - [x] Campos dinámicos para zonas de carga
+  - [x] Sistema de raspadores múltiples por posición
+  - [x] Vista de detalle completa
+  - [x] Optimización Mobile First
+  - [x] Preservación de estado en navegación
+  - [x] Exportación JSON
+  - [x] Duplicación de transportadores
 
 ---
+
 
 ## 7. Configuración PWA
 
@@ -85,7 +146,7 @@ La aplicación está configurada como Progressive Web App (PWA), permitiendo su 
 
 ### Archivos de Configuración
 | Archivo | Propósito |
-| :--- | :--- |
+|---------|-----------|
 | `vite.config.ts` | Configuración del plugin VitePWA |
 | `public/manifest.json` | Manifest con metadatos de la aplicación |
 | `index.html` | Enlace al manifest y meta tags PWA |
@@ -105,6 +166,7 @@ npm run build  # Build de producción con optimización PWA
 
 ---
 
+
 ## 8. Infraestructura Cloudflare
 
 ### 8.1 Arquitectura Unificada (Worker + Frontend)
@@ -118,18 +180,18 @@ La aplicación utiliza una arquitectura unificada donde **el Worker sirve tanto 
 │  │   ASSETS        │  │         API Routes               │  │
 │  │   Binding       │  │  /api/auth/*                     │  │
 │  │  (Static Files) │  │  /api/evaluations/*              │  │
-│  │                 │  │  /api/files/*                     │  │
-│  │  • index.html   │  │  /api/stats/*                    │  │
-│  │  • /assets/*    │  └─────────────────────────────────┘  │
-│  │  • /sw.js       │                                        │
+│  │                 │  │  /api/transportadores/*           │  │
+│  │  • index.html   │  │  /api/files/*                     │  │
+│  │  • /assets/*    │  │  /api/stats/*                    │  │
+│  │  • /sw.js       │  └─────────────────────────────────┘  │
 │  └─────────────────┘                                        │
 └─────────────────────────────────────────────────────────────┘
-         ↓                    ↓                    ↓
-    ┌─────────────────────────────────────────────────────┐
-    │              Cloudflare Services                      │
-    │  • D1 Database (cema_database)                       │
-    │  • R2 Bucket (cema-files)                            │
-    └─────────────────────────────────────────────────────┘
+          ↓                    ↓                    ↓
+     ┌─────────────────────────────────────────────────────┐
+     │              Cloudflare Services                      │
+     │  • D1 Database (cema_database)                       │
+     │  • R2 Bucket (cema-files)                            │
+     └─────────────────────────────────────────────────────┘
 ```
 
 ### 8.2 URLs y Endpoints
@@ -168,6 +230,10 @@ bucket_name = "cema-files"
 - **GET/POST /api/evaluations** - Evaluaciones CEMA
 - **GET /api/evaluations/:id** - Obtener evaluación por ID
 - **DELETE /api/evaluations/:id** - Eliminar evaluación por ID
+- **GET/POST /api/transportadores** - Transportadores
+- **GET /api/transportadores/:id** - Obtener transportador por ID
+- **PUT /api/transportadores/:id** - Actualizar transportador
+- **DELETE /api/transportadores/:id** - Eliminar transportador
 - **GET/POST/DELETE /api/files** - Archivos en R2
 - **GET /api/stats** - Estadísticas del dashboard
 
@@ -181,6 +247,7 @@ Usuario → cema.piwisuite.cl (Custom Domain → Worker)
 ```
 
 ---
+
 
 ## 9. Página de Detalle de Evaluación (EvaluationDetail)
 
@@ -199,13 +266,8 @@ La página de detalle de evaluación proporciona una vista completa e interactiv
 - **Eliminar**: Eliminación de la evaluación con modal de confirmación.
 - **Volver**: Navegación de regreso al historial.
 
-### 9.3 Flujo de Usuario
-1. Desde el Dashboard, el usuario puede ver el historial de evaluaciones.
-2. Al seleccionar una evaluación, se navega a la página de detalle.
-3. En la página de detalle, el usuario puede ver el gráfico radar con las métricas.
-4. Si desea eliminar, confirma la acción en el modal de confirmación.
-
 ---
+
 
 ## 10. Filtros y Vistas del Dashboard
 
@@ -230,6 +292,7 @@ El sistema incluye un panel de filtros para optimizar la búsqueda de evaluacion
 - El botón "Limpiar Filtros" reinicia todos los filtros a sus valores por defecto.
 
 ---
+
 
 ## 11. Despliegue
 
@@ -278,6 +341,7 @@ El dominio `cema.piwisuite.cl` está configurado en Cloudflare para apuntar al W
 
 ---
 
+
 ## 12. Base de Datos D1
 
 ### 12.1 Esquema Principal
@@ -305,6 +369,26 @@ CREATE TABLE evaluations (
     score REAL
 );
 
+-- Tabla de transportadores (NUEVO)
+CREATE TABLE transportadores (
+    id TEXT PRIMARY KEY,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    estado TEXT DEFAULT 'borrador',
+    identity TEXT NOT NULL,
+    geometria TEXT,
+    material TEXT,
+    capacidad TEXT,
+    correa TEXT,
+    polines TEXT,
+    zonaCarga TEXT,
+    limpieza TEXT,
+    tambores TEXT,
+    accionamiento TEXT,
+    takeUp TEXT,
+    curvas TEXT
+);
+
 -- Tabla de usuarios
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -325,5 +409,65 @@ npm run db:studio
 ```
 
 ---
+
+
+## 13. Componentes Principales
+
+### 13.1 Formularios del Módulo Transportadores
+| Componente | Descripción |
+|------------|-------------|
+| `TransportadorIdentityForm` | Datos de identidad y ubicación |
+| `TransportadorGeometriaForm` | Dimensiones y perfil del transportador |
+| `TransportadorMaterialForm` | Propiedades del material transportado |
+| `TransportadorCapacidadForm` | Capacidad de transporte |
+| `TransportadorCorreaForm` | Características de la correa |
+| `TransportadorPolinesForm` | Configuración de polines |
+| `TransportadorZonaCargaForm` | Zonas de carga y cama de impacto |
+| `TransportadorLimpiezaForm` | Sistema de raspadores |
+| `TransportadorTamboresForm` | Configuración de tambores |
+| `TransportadorAccionamientoForm` | Sistema de accionamiento |
+| `TransportadorTakeUpForm` | Sistema tensor |
+| `TransportadorCurvasForm` | Curvas horizontales y verticales |
+
+### 13.2 Interfaces de Selección
+| Componente | Descripción |
+|------------|-------------|
+| `ClienteSelectorModal` | Selección de cliente industrial |
+| `MaterialSelectorModal` | Selección de tipo de material |
+
+---
+
+
+## 14. Historial de Cambios
+
+### v2.0.0 - Módulo Maestro de Transportadores
+**Fecha**: Febrero 2026
+
+**Nuevas Funcionalidades:**
+- ✅ Implementación completa del módulo Maestro de Transportadores
+- ✅ 12 secciones de formulario con navegación por pestañas
+- ✅ Sistema de raspadores múltiples por posición
+- ✅ Campos dinámicos para zonas de carga
+- ✅ Vista de detalle completa con secciones expandibles
+- ✅ Exportación JSON de transportadores
+- ✅ Duplicación de transportadores existentes
+- ✅ Indicador de progreso circular (% completitud)
+
+**Mejoras:**
+- ✅ Optimización Mobile First responsive
+- ✅ Botones con iconos para navegación móvil
+- ✅ Bug fix: Preservación de estado al navegar entre pestañas
+- ✅ Integración de acceso rápido desde Home
+
+**Archivos Modificados:**
+- `App.tsx`
+- `screens/Home.tsx`
+- `screens/TransportadorForm.tsx`
+- `screens/TransportadorDetail.tsx`
+- `types.ts`
+- `components/Transportador*.tsx` (12 componentes)
+
+---
+
 
 *Este documento es parte del repositorio oficial del Asistente CEMA.*
