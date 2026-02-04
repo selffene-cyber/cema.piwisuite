@@ -68,7 +68,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         
         <div className="text-center">
           <img
-            src="/icon/favicon-96x96.png"
+            src="/icon-192.png"
             alt="CEMA Logo"
             className="mx-auto w-16 h-16 rounded-2xl shadow-xl mb-8"
           />
