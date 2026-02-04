@@ -7,17 +7,22 @@ const InstallPrompt: React.FC = () => {
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
+    console.log('[InstallPrompt] Iniciando detección de dispositivo...');
+    
     // Detect iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(isIOSDevice);
+    console.log('[InstallPrompt] ¿Es iOS?', isIOSDevice);
 
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('[InstallPrompt] App ya instalada (standalone mode)');
       setInstalled(true);
     }
 
     // Listen for beforeinstallprompt event (Android)
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('[InstallPrompt] Evento beforeinstallpreneur disparado!', e);
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallPrompt(true);
@@ -25,12 +30,19 @@ const InstallPrompt: React.FC = () => {
 
     // Listen for successful install
     window.addEventListener('appinstalled', () => {
+      console.log('[InstallPrompt] App instalada exitosamente');
       setInstalled(true);
       setShowInstallPrompt(false);
     });
 
+    // Debug: check if service worker is supported
+    console.log('[InstallPrompt] ¿Service Worker soportado?', 'serviceWorker' in navigator);
+
     if (!isIOSDevice) {
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      console.log('[InstallPrompt] Listener de beforeinstallprompt agregado');
+    } else {
+      console.log('[InstallPrompt] Dispositivo iOS detectado, saltando listener de Android');
     }
 
     return () => {
