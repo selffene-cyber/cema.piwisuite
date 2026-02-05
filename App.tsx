@@ -12,7 +12,7 @@ import Home from './screens/Home';
 import ConfigPage from './screens/ConfigPage';
 import Layout from './components/Layout';
 import CEMALoading from './components/CEMALoading';
-import { evaluationsApi, authApi } from './utils/api';
+import { evaluationsApi, authApi, filterEvaluationsByRole } from './utils/api';
 import { calculateScores } from './utils/calculator';
 import { generateEvaluationPDFSimple, generateTransportadorPDF } from './utils/pdfGenerator';
 
@@ -312,12 +312,19 @@ const App: React.FC = () => {
     setShowLoading(false);
   }, []);
 
-  // Fetch evaluations from API
+  // Fetch evaluations from API with role-based filtering
   const fetchEvaluations = useCallback(async () => {
     try {
       setLoading(true);
       const data = await evaluationsApi.getAll();
-      setEvaluations(data);
+      
+      // Filter evaluations based on user role
+      if (currentUser) {
+        const filteredData = filterEvaluationsByRole(data, currentUser);
+        setEvaluations(filteredData);
+      } else {
+        setEvaluations(data);
+      }
       setError(null);
     } catch (err: any) {
       console.error('Failed to fetch evaluations:', err.message);
@@ -326,7 +333,7 @@ const App: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   // Fetch evaluations when user is logged in
   useEffect(() => {
@@ -523,12 +530,12 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     if (activeModule === 'home') {
-      return <Home evaluations={evaluations} setActiveModule={setActiveModule} />;
+      return <Home evaluations={evaluations} setActiveModule={setActiveModule} currentUser={currentUser} />;
     }
 
     if (activeModule === 'cema576') {
       if (view === 'form') {
-        return <EvaluationForm onSave={saveEvaluation} onCancel={() => setView('dashboard')} onSaveComplete={() => setView('dashboard')} />;
+        return <EvaluationForm onSave={saveEvaluation} onCancel={() => setView('dashboard')} onSaveComplete={() => setView('dashboard')} currentUser={currentUser} />;
       }
       if (view === 'detail' && selectedEvaluationId) {
         return <EvaluationDetail evaluationId={selectedEvaluationId} onBack={() => { setView('dashboard'); setSelectedEvaluationId(null); }} />;
@@ -545,6 +552,7 @@ const App: React.FC = () => {
           onViewEvaluation={(id) => { setSelectedEvaluationId(id); setView('detail'); }}
           onDeleteEvaluation={deleteEvaluation}
           onDownloadPDF={handleDownloadPDF}
+          currentUser={currentUser}
         />
       );
     }

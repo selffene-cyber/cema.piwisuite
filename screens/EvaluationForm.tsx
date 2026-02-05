@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ClienteSelectorModal from '../components/ClienteSelectorModal';
 import MaterialSelectorModal from '../components/MaterialSelectorModal';
-import { SpliceType, Abrasiveness, Moisture, Evaluation, TipoCorrea, Capacidad, TipoMaterial, ClienteIndustrial, AnchoUnidad, VelocidadUnidad } from '../types';
+import { SpliceType, Abrasiveness, Moisture, Evaluation, TipoCorrea, Capacidad, TipoMaterial, ClienteIndustrial, AnchoUnidad, VelocidadUnidad, User } from '../types';
 import { calculateScores, convertBeltWidthToInches, convertBeltSpeedToFPM, getBeltWidthScore, getBeltSpeedScore, getAbrasivenessScore, getMoistureScore, getSpliceTypeScore } from '../utils/calculator';
 import { generateEvaluationPDF } from '../utils/pdfGenerator';
 import {
@@ -29,9 +29,10 @@ interface EvaluationFormProps {
   onSave: (evalItem: Evaluation) => void;
   onCancel: () => void;
   onSaveComplete?: () => void;
+  currentUser?: User;
 }
 
-const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel, onSaveComplete }) => {
+const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel, onSaveComplete, currentUser }) => {
   const [showClienteModal, setShowClienteModal] = useState(false);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -105,6 +106,9 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({ onSave, onCancel, onSav
       timestamp: new Date().toISOString(),
       totalScore: result.total,
       severityClass: result.severityClass,
+      // Add user tracking fields
+      userId: currentUser?.id || undefined,
+      teamId: currentUser?.teamId || undefined,
     };
     
     setSaving(true);

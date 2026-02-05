@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Evaluation } from '../types';
+import { Evaluation, User, UserRole } from '../types';
 
 interface FilterState {
   clientName: string;
@@ -22,6 +22,7 @@ interface DashboardProps {
   onDeleteEvaluation?: (id: string) => void;
   onDownloadPDF?: (id: string) => void;
   onRefresh?: () => void;
+  currentUser?: User;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
@@ -35,8 +36,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   onViewEvaluation,
   onDeleteEvaluation,
   onDownloadPDF,
-  onRefresh
+  onRefresh,
+  currentUser
 }) => {
+  const isAuditor = currentUser?.role === UserRole.AUDITOR;
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -74,6 +77,22 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="flex flex-col space-y-6 animate-in fade-in duration-500">
+      {/* Read-Only Mode Indicator for Auditors */}
+      {isAuditor && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
+          <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-amber-800 uppercase tracking-wide">Modo Solo Lectura</p>
+            <p className="text-xs text-amber-600">Como Auditor, puedes visualizar y exportar datos, pero no puedes crear ni eliminar evaluaciones.</p>
+          </div>
+        </div>
+      )}
+
       <div className="soft-card p-6 lg:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-l-4 border-l-[#5e72e4]">
         <div>
           <h3 className="text-xs font-black text-[#32325d] uppercase tracking-[0.2em]">Gestión CEMA 576</h3>
@@ -133,6 +152,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <button
               onClick={onNewEvaluation}
               className="px-5 py-3.5 bg-[#5e72e4] text-white rounded-xl font-bold text-[10px] uppercase tracking-[0.15em] shadow-lg hover:shadow-xl transition-all hover:bg-[#435ad8]"
+              disabled={isAuditor}
             >
               + Nuevo
             </button>
@@ -309,7 +329,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 
                 {/* Delete Button */}
-                {onDeleteEvaluation && (
+                {onDeleteEvaluation && !isAuditor && (
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
@@ -362,7 +382,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Empalme</th>
                     <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Material</th>
                     <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                    {onDeleteEvaluation && <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">Acciones</th>}
+                    {onDeleteEvaluation && !isAuditor && <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">Acciones</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -405,7 +425,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       <td className="px-4 py-3">
                         <span className="text-[10px] font-bold text-slate-400">{new Date(evalItem.timestamp).toLocaleDateString()}</span>
                       </td>
-                      {onDeleteEvaluation && (
+                      {onDeleteEvaluation && !isAuditor && (
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
                             {onDownloadPDF && (

@@ -1,10 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { Evaluation } from '../types';
+import { Evaluation, User, UserRole } from '../types';
 
 interface HomeProps {
   evaluations: Evaluation[];
   setActiveModule: (module: string) => void;
+  currentUser?: User;
 }
 
 // Helper function to format date based on period
@@ -144,7 +145,8 @@ const generateSVGPath = (dataPoints: number[], maxValue: number, width: number, 
   return path;
 };
 
-const Home: React.FC<HomeProps> = ({ evaluations, setActiveModule }) => {
+const Home: React.FC<HomeProps> = ({ evaluations, setActiveModule, currentUser }) => {
+  const isAuditor = currentUser?.role === UserRole.AUDITOR;
   const [timeFilter, setTimeFilter] = useState<'Día' | 'Semana' | 'Mes' | 'Año'>('Mes');
   const [moduleFilter, setModuleFilter] = useState<'Todos' | 'CEMA 576' | 'Impacto'>('Todos');
   const recentItems = evaluations.slice(0, 6);
@@ -199,11 +201,28 @@ const Home: React.FC<HomeProps> = ({ evaluations, setActiveModule }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 w-full pb-10">
+      {/* Read-Only Mode Indicator for Auditors */}
+      {isAuditor && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
+          <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-amber-800 uppercase tracking-wide">Modo Solo Lectura</p>
+            <p className="text-xs text-amber-600">Como Auditor, puedes visualizar y exportar datos, pero no puedes crear ni modificar evaluaciones.</p>
+          </div>
+        </div>
+      )}
+
       {/* Quick Access Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <button 
           onClick={() => setActiveModule('cema576')}
-          className="soft-card p-8 text-left group hover:bg-slate-50 transition-all border-l-[6px] border-l-[#2dce89] active:scale-[0.99]"
+          className={`soft-card p-8 text-left group hover:bg-slate-50 transition-all border-l-[6px] border-l-[#2dce89] active:scale-[0.99] ${isAuditor ? 'opacity-60 cursor-not-allowed' : ''}`}
+          disabled={isAuditor}
         >
           <span className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Módulo Operativo</span>
           <h3 className="text-sm font-extrabold text-[#32325d] tracking-widest uppercase group-hover:text-[#2dce89] transition-colors">ANÁLISIS CEMA 576</h3>

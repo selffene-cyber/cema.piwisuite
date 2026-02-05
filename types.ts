@@ -51,6 +51,8 @@ export interface Evaluation {
   totalScore: number;
   severityClass: number;
   module?: 'CEMA 576' | 'Impacto';
+  userId?: string; // ID del usuario que creó la evaluación
+  teamId?: string; // ID del equipo/faena de la evaluación
 }
 
 export interface User {
@@ -61,11 +63,18 @@ export interface User {
   cargo?: string;
   role: UserRole;
   estado: UserEstado;
+  teamId?: string; // ID del equipo/faena asignado
   created_at?: string;
   updated_at?: string;
 }
 
-export type UserRole = 'Admin' | 'Manager' | 'Técnico' | 'Auditor';
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  TECNICO = 'TECNICO',
+  AUDITOR = 'AUDITOR'
+}
+
 export type UserEstado = 'Activo' | 'Inactivo';
 
 export type TipoCorrea = 'EP' | 'ST';

@@ -5,6 +5,8 @@
  * for making requests to the Cloudflare Worker API.
  */
 
+import { Evaluation, User, UserRole } from '../types';
+
 // Get the API base URL based on environment
 const getApiBaseUrl = (): string => {
   // Always use localhost for development (localhost or 127.0.0.1 or local IPs)
@@ -263,3 +265,174 @@ export const usersApi = {
     });
   },
 };
+
+// =============================================================================
+// RBAC (Role-Based Access Control) Utility Functions
+// =============================================================================
+
+/**
+ * Type guard to check if a value is a valid UserRole
+ */
+function isValidUserRole(role: string): role is UserRole {
+  return Object.values(UserRole).includes(role as UserRole);
+}
+
+/**
+ * Check if the evaluation belongs to the user's team
+ */
+function isSameTeam(evaluation: Evaluation, user: User): boolean {
+  if (!user.teamId) return false;
+  return evaluation.teamId === user.teamId;
+}
+
+/**
+ * Check if the evaluation was created by the user
+ */
+function isOwnEvaluation(evaluation: Evaluation, user: User): boolean {
+  return evaluation.userId === user.id;
+}
+
+/**
+ * Check if a user can view an evaluation
+ * 
+ * Access Matrix:
+ * | Role    | View All | View Own |
+ * |---------|----------|----------|
+ * | ADMIN   | ✅       | ✅       |
+ * | MANAGER | ✅ (team)| ✅       |
+ * | TECNICO | ❌       | ✅       |
+ * | AUDITOR | ✅       | ✅       |
+ */
+export function canView(evaluation: Evaluation, user: User): boolean {
+  if (!user || !isValidUserRole(user.role)) return false;
+
+  switch (user.role) {
+    case UserRole.ADMIN:
+      // Admin can view all evaluations
+      return true;
+
+    case UserRole.MANAGER:
+      // Manager can view all team evaluations or their own
+      return isSameTeam(evaluation, user) || isOwnEvaluation(evaluation, user);
+
+    case UserRole.TECNICO:
+      // Tecnico can only view their own evaluations
+      return isOwnEvaluation(evaluation, user);
+
+    case UserRole.AUDITOR:
+      // Auditor can view all evaluations
+      return true;
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * Check if a user can edit an evaluation
+ * 
+ * Access Matrix:
+ * | Role    | Edit All | Edit Own |
+ * |---------|----------|----------|
+ * | ADMIN   | ✅       | ✅       |
+ * | MANAGER | ✅ (team)| ✅       |
+ * | TECNICO | ❌       | ✅       |
+ * | AUDITOR | ❌       | ❌       |
+ */
+export function canEdit(evaluation: Evaluation, user: User): boolean {
+  if (!user || !isValidUserRole(user.role)) return false;
+
+  switch (user.role) {
+    case UserRole.ADMIN:
+      // Admin can edit all evaluations
+      return true;
+
+    case UserRole.MANAGER:
+      // Manager can edit team evaluations or their own
+      return isSameTeam(evaluation, user) || isOwnEvaluation(evaluation, user);
+
+    case UserRole.TECNICO:
+      // Tecnico can only edit their own evaluations
+      return isOwnEvaluation(evaluation, user);
+
+    case UserRole.AUDITOR:
+      // Auditor cannot edit any evaluations
+      return false;
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * Check if a user can delete an evaluation
+ * 
+ * Access Matrix:
+ * | Role    | Delete All | Delete Own |
+ * |---------|------------|------------|
+ * | ADMIN   | ✅         | ✅         |
+ * | MANAGER | ✅ (team)  | ✅         |
+ * | TECNICO | ❌         | ✅         |
+ * | AUDITOR | ❌         | ❌         |
+ */
+export function canDelete(evaluation: Evaluation, user: User): boolean {
+  if (!user || !isValidUserRole(user.role)) return false;
+
+  switch (user.role) {
+    case UserRole.ADMIN:
+      // Admin can delete all evaluations
+      return true;
+
+    case UserRole.MANAGER:
+      // Manager can delete team evaluations or their own
+      return isSameTeam(evaluation, user) || isOwnEvaluation(evaluation, user);
+
+    case UserRole.TECNICO:
+      // Tecnico can only delete their own evaluations
+      return isOwnEvaluation(evaluation, user);
+
+    case UserRole.AUDITOR:
+      // Auditor cannot delete any evaluations
+      return false;
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * Filter evaluations based on user role permissions
+ * Returns only the evaluations the user is allowed to view
+ */
+export function filterEvaluationsByRole(
+  evaluations: Evaluation[],
+  user: User
+): Evaluation[] {
+  if (!user || !isValidUserRole(user.role)) {
+    // Return empty array for invalid users
+    return [];
+  }
+
+  switch (user.role) {
+    case UserRole.ADMIN:
+      // Admin can see all evaluations
+      return evaluations;
+
+    case UserRole.MANAGER:
+      // Manager can see team evaluations and their own
+      return evaluations.filter(
+        (item) => isSameTeam(item, user) || isOwnEvaluation(item, user)
+      );
+
+    case UserRole.TECNICO:
+      // Tecnico can only see their own evaluations
+      return evaluations.filter((item) => isOwnEvaluation(item, user));
+
+    case UserRole.AUDITOR:
+      // Auditor can see all evaluations
+      return evaluations;
+
+    default:
+      return [];
+  }
+}
