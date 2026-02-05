@@ -108,7 +108,7 @@ const TransportadorMaterialForm: React.FC<TransportadorMaterialFormProps> = ({
                 step="0.01"
                 min="0"
                 value={material.densidadAparante_tm3}
-                onChange={(e) => handleChange('densidadAparante_tm3', parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleChange('densidadAparante_tm3', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                 className="flex-1 px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
               />
               <span className="flex items-center px-3 py-3 bg-gray-100 text-xs font-semibold text-slate-500 rounded-lg">
@@ -167,7 +167,7 @@ const TransportadorMaterialForm: React.FC<TransportadorMaterialFormProps> = ({
                 step="1"
                 min="0"
                 value={material.tamanoMaxParticula_mm}
-                onChange={(e) => handleChange('tamanoMaxParticula_mm', parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleChange('tamanoMaxParticula_mm', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                 className="flex-1 px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
               />
               <span className="flex items-center px-3 py-3 bg-gray-100 text-xs font-semibold text-slate-500 rounded-lg">
@@ -186,7 +186,7 @@ const TransportadorMaterialForm: React.FC<TransportadorMaterialFormProps> = ({
                 step="1"
                 min="0"
                 value={material.tamanoMedio_mm}
-                onChange={(e) => handleChange('tamanoMedio_mm', parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleChange('tamanoMedio_mm', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                 className="flex-1 px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
               />
               <span className="flex items-center px-3 py-3 bg-gray-100 text-xs font-semibold text-slate-500 rounded-lg">

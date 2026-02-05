@@ -9,6 +9,7 @@ interface TransportadorDetailProps {
   onEdit: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
+  onUpdateEstado?: (id: string, newEstado: RegistroEstado) => void;
 }
 
 // Utility function to calculate completeness percentage
@@ -307,6 +308,7 @@ const TransportadorDetail: React.FC<TransportadorDetailProps> = ({
   onEdit,
   onDuplicate,
   onDelete,
+  onUpdateEstado,
 }) => {
   const [transportador, setTransportador] = useState<Transportador | null>(null);
   const [loading, setLoading] = useState(true);
@@ -506,6 +508,18 @@ const TransportadorDetail: React.FC<TransportadorDetailProps> = ({
           <span className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider ${estadoInfo.bg} ${estadoInfo.text}`}>
             {estadoInfo.icon} {ESTADO_LABELS[transportador.estado]}
           </span>
+          {onUpdateEstado && (
+            <select
+              value={transportador.estado}
+              onChange={(e) => onUpdateEstado(transportador.id, e.target.value as RegistroEstado)}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white border border-gray-200 text-slate-600 cursor-pointer hover:border-[#5e72e4] transition-colors"
+            >
+              <option value="borrador">Borrador</option>
+              <option value="completo">Completo</option>
+              <option value="validado">Validado</option>
+              <option value="archivado">Archivado</option>
+            </select>
+          )}
         </div>
 
         {/* Main Info Row */}
@@ -643,7 +657,7 @@ const TransportadorDetail: React.FC<TransportadorDetailProps> = ({
             <div>{renderField('Longitud Total', `${geometria?.longitudTotal_m || 0} m`)}</div>
             <div>{renderField('Elevación', `${geometria?.elevacionTotal_m || 0} m`)}</div>
             <div>{renderField('Inclinación', `${geometria?.inclinacionPromedio_grados || 0}°`)}</div>
-            <div>{renderField('Ancho de Banda', `${geometria?.anchoBanda_mm || 0} mm`)}</div>
+            <div>{renderField('Ancho de Banda', `${geometria?.anchoBanda_mm || 0} ${geometria?.anchoUnidad || 'mm'}`)}</div>
             <div>{renderField('Velocidad', `${geometria?.velocidadNominal_ms || 0} m/s`)}</div>
             <div>{renderField('Perfil', PERFIL_LABELS[geometria?.perfil] || geometria?.perfil || '-')}</div>
           </div>

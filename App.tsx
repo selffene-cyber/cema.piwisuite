@@ -14,7 +14,7 @@ import Layout from './components/Layout';
 import CEMALoading from './components/CEMALoading';
 import { evaluationsApi, authApi } from './utils/api';
 import { calculateScores } from './utils/calculator';
-import { generateEvaluationPDFSimple } from './utils/pdfGenerator';
+import { generateEvaluationPDFSimple, generateTransportadorPDF } from './utils/pdfGenerator';
 
 interface FilterState {
   clientName: string;
@@ -480,6 +480,39 @@ const App: React.FC = () => {
     await saveTransportador(duplicate);
   };
 
+  const handleUpdateEstado = async (id: string, newEstado: 'borrador' | 'completo' | 'validado' | 'archivado') => {
+    try {
+      const stored = localStorage.getItem('transportadores');
+      const existing: Transportador[] = stored ? JSON.parse(stored) : [];
+      
+      const existingIndex = existing.findIndex(t => t.id === id);
+      if (existingIndex < 0) {
+        throw new Error('Transportador no encontrado');
+      }
+      
+      const updatedTransportador: Transportador = {
+        ...existing[existingIndex],
+        estado: newEstado,
+        updatedAt: new Date().toISOString(),
+        version: (existing[existingIndex].version || 1) + 1,
+      };
+      
+      existing[existingIndex] = updatedTransportador;
+      localStorage.setItem('transportadores', JSON.stringify(existing));
+      setTransportadores(existing);
+    } catch (err: any) {
+      console.error('Failed to update estado:', err);
+      throw new Error('Error al actualizar estado: ' + (err.message || String(err)));
+    }
+  };
+
+  const handleExportPDF = async (id: string) => {
+    const transportador = transportadores.find(t => t.id === id);
+    if (!transportador) return;
+    
+    await generateTransportadorPDF(transportador);
+  };
+
   if (showLoading) {
     return <CEMALoading onFinish={handleLoadingFinish} />;
   }
@@ -539,6 +572,7 @@ const App: React.FC = () => {
               deleteTransportador(id);
               setTransportadorView('list');
             }}
+            onUpdateEstado={handleUpdateEstado}
           />
         );
       }
@@ -605,6 +639,8 @@ const App: React.FC = () => {
           }}
           onDuplicateTransportador={handleDuplicateTransportador}
           onDeleteTransportador={deleteTransportador}
+          onUpdateEstado={handleUpdateEstado}
+          onExportPDF={handleExportPDF}
           loading={loadingTransportadores}
         />
       );

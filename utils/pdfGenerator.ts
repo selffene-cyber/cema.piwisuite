@@ -281,3 +281,185 @@ export async function generateEvaluationPDFSimple(result: any, formData: any) {
   // Save
   pdf.save(`Evaluacion_CEMA_${formData.tag}.pdf`);
 }
+
+export async function generateTransportadorPDF(transportador: any) {
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const margin = 20;
+  let yPos = 20;
+
+  // Colors
+  const primaryColor: [number, number, number] = [94, 114, 228]; // #5e72e4
+  const textColor: [number, number, number] = [50, 50, 93]; // #32325d
+  const grayColor: [number, number, number] = [108, 117, 125]; // #6c757d
+
+  // Header with colored bar
+  pdf.setFillColor(...primaryColor);
+  pdf.rect(0, 0, pageWidth, 8, 'F');
+  
+  pdf.setFontSize(16);
+  pdf.setTextColor(...textColor);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('FICHA TÉCNICA DE TRANSPORTADOR', margin, yPos);
+  
+  yPos += 10;
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(...grayColor);
+  pdf.text(`Fecha: ${new Date().toLocaleString()}`, pageWidth - margin - 60, yPos);
+
+  // Identity Section
+  yPos += 15;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(margin, yPos, pageWidth - margin, yPos);
+  
+  yPos += 10;
+  pdf.setFontSize(12);
+  pdf.setTextColor(...primaryColor);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('IDENTIFICACIÓN', margin, yPos);
+  
+  yPos += 8;
+  pdf.setFontSize(10);
+  pdf.setTextColor(...textColor);
+  pdf.setFont('helvetica', 'normal');
+  
+  const identity = transportador.identity || {};
+  const fields = [
+    ['Código TAG', identity.codigoTransportador || '-'],
+    ['Nombre', identity.nombreDescriptivo || '-'],
+    ['Cliente', identity.cliente || '-'],
+    ['Faena', identity.faena || '-'],
+    ['Área', identity.area || '-'],
+    ['Tipo de Equipo', identity.tipoEquipo || '-'],
+    ['Usuario', identity.usuario || '-'],
+    ['Fecha Levantamiento', identity.fechaLevantamiento || '-'],
+  ];
+  
+  fields.forEach(([label, value]) => {
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`${label}:`, margin, yPos);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(String(value), margin + 50, yPos);
+    yPos += 6;
+  });
+
+  // Geometry Section
+  const geometria = transportador.geometria || {};
+  yPos += 10;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(margin, yPos, pageWidth - margin, yPos);
+  
+  yPos += 10;
+  pdf.setFontSize(12);
+  pdf.setTextColor(...primaryColor);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('GEOMETRÍA', margin, yPos);
+  
+  yPos += 8;
+  pdf.setFontSize(10);
+  pdf.setTextColor(...textColor);
+  pdf.setFont('helvetica', 'normal');
+  
+  const geoFields = [
+    ['Longitud Total', `${geometria.longitudTotal_m || 0} m`],
+    ['Ancho de Banda', `${geometria.anchoBanda_mm || 0} mm`],
+    ['Velocidad Nominal', `${geometria.velocidadNominal_ms || 0} m/s`],
+    ['Elevación Total', `${geometria.elevacionTotal_m || 0} m`],
+    ['Inclinación Promedio', `${geometria.inclinacionPromedio_grados || 0}°`],
+    ['Perfil', geometria.perfil || '-'],
+  ];
+  
+  geoFields.forEach(([label, value]) => {
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`${label}:`, margin, yPos);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(String(value), margin + 50, yPos);
+    yPos += 6;
+  });
+
+  // Material Section
+  const material = transportador.material || {};
+  yPos += 10;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(margin, yPos, pageWidth - margin, yPos);
+  
+  yPos += 10;
+  pdf.setFontSize(12);
+  pdf.setTextColor(...primaryColor);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('MATERIAL', margin, yPos);
+  
+  yPos += 8;
+  pdf.setFontSize(10);
+  pdf.setTextColor(...textColor);
+  pdf.setFont('helvetica', 'normal');
+  
+  const matFields = [
+    ['Material', material.material || '-'],
+    ['Densidad Aparente', `${material.densidadAparante_tm3 || 0} t/m³`],
+    ['Tamaño Máximo', `${material.tamanoMaxParticula_mm || 0} mm`],
+    ['Tamaño Medio', `${material.tamanoMedio_mm || 0} mm`],
+    ['Humedad', material.humedad || '-'],
+    ['Fluidez', material.fluidez || '-'],
+    ['Abrasividad', material.abrasividad || '-'],
+  ];
+  
+  matFields.forEach(([label, value]) => {
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`${label}:`, margin, yPos);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(String(value), margin + 50, yPos);
+    yPos += 6;
+  });
+
+  // Correa Section
+  const correa = transportador.correa || {};
+  if (yPos > 230) {
+    pdf.addPage();
+    yPos = 20;
+  }
+  
+  yPos += 10;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(margin, yPos, pageWidth - margin, yPos);
+  
+  yPos += 10;
+  pdf.setFontSize(12);
+  pdf.setTextColor(...primaryColor);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('CORREA', margin, yPos);
+  
+  yPos += 8;
+  pdf.setFontSize(10);
+  pdf.setTextColor(...textColor);
+  pdf.setFont('helvetica', 'normal');
+  
+  const correaFields = [
+    ['Tipo', correa.tipo || '-'],
+    ['Resistencia Nominal', `${correa.resistenciaNominal_kNm || 0} kN/m`],
+    ['Número Telas/Cables', correa.numTelasCables || '-'],
+    ['Cubierta Superior', correa.tipoCubiertaSuperior || '-'],
+    ['Cubierta Inferior', correa.tipoCubiertaInferior || '-'],
+    ['Espesor Cubierta Sup', `${correa.espesorCubiertaSup_mm || 0} mm`],
+    ['Espesor Cubierta Inf', `${correa.espesorCubiertaInf_mm || 0} mm`],
+    ['Tipo Empalme', correa.tipoEmpalme || '-'],
+  ];
+  
+  correaFields.forEach(([label, value]) => {
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`${label}:`, margin, yPos);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(String(value), margin + 50, yPos);
+    yPos += 6;
+  });
+
+  // Footer
+  pdf.setFontSize(8);
+  pdf.setTextColor(...grayColor);
+  pdf.text('Asistente CEMA • Maestro de Transportadores', pageWidth / 2, 280, { align: 'center' });
+
+  // Save
+  const fileName = `Transportador_${identity.codigoTransportador || 'unknown'}.pdf`;
+  pdf.save(fileName);
+}

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Transportador, TransportadorIdentity, TransportadorGeometria, TransportadorMaterial, TransportadorCapacidad, TransportadorCorrea, TransportadorPolines, TransportadorZonaCarga, TransportadorLimpieza, TransportadorTambores, TransportadorAccionamiento, TransportadorTakeUp, TransportadorCurvas } from '../types';
 import TransportadorIdentityForm from '../components/TransportadorIdentityForm';
 import TransportadorGeometriaForm from '../components/TransportadorGeometriaForm';
@@ -93,6 +93,20 @@ const TransportadorForm: React.FC<TransportadorFormProps> = ({
   const [activeTab, setActiveTab] = useState('identity');
   const [saving, setSaving] = useState(false);
 
+  // Auto-populate zona carga lump max from material max particle size
+  useEffect(() => {
+    if (formData.material.tamanoMaxParticula_mm > 0) {
+      const shouldUpdate = formData.zonaCarga.zonas?.some(zona => !zona.tamanoLumpMax_mm);
+      if (shouldUpdate) {
+        const updatedZonas = formData.zonaCarga.zonas?.map(zona => ({
+          ...zona,
+          tamanoLumpMax_mm: zona.tamanoLumpMax_mm || formData.material.tamanoMaxParticula_mm
+        })) || [];
+        onFormDataChange('zonaCarga', { ...formData.zonaCarga, zonas: updatedZonas });
+      }
+    }
+  }, [formData.material.tamanoMaxParticula_mm, formData.zonaCarga.zonas?.length]);
+
   // Calculate overall completeness
   const completeness = useMemo(() => {
     const sections = [
@@ -164,7 +178,7 @@ const TransportadorForm: React.FC<TransportadorFormProps> = ({
       case 'polines':
         return <TransportadorPolinesForm key="polines" polines={formData.polines} onChange={(data) => onFormDataChange('polines', data)} />;
       case 'zonaCarga':
-        return <TransportadorZonaCargaForm key="zonaCarga" zonaCarga={formData.zonaCarga} onChange={(data) => onFormDataChange('zonaCarga', data)} />;
+        return <TransportadorZonaCargaForm key="zonaCarga" zonaCarga={formData.zonaCarga} materialTamanoMaxParticula_mm={formData.material.tamanoMaxParticula_mm} onChange={(data) => onFormDataChange('zonaCarga', data)} />;
       case 'limpieza':
         return <TransportadorLimpiezaForm key="limpieza" limpieza={formData.limpieza} onChange={(data) => onFormDataChange('limpieza', data)} />;
       case 'tambores':

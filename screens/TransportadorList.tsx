@@ -9,6 +9,8 @@ interface TransportadorListProps {
   onViewTransportador: (id: string) => void;
   onDuplicateTransportador: (id: string) => void;
   onDeleteTransportador: (id: string) => void;
+  onUpdateEstado?: (id: string, newEstado: RegistroEstado) => void;
+  onExportPDF?: (id: string) => void;
   loading?: boolean;
 }
 
@@ -37,33 +39,97 @@ const TIPO_EQUIPO_LABELS: Record<string, string> = {
 
 // Calculate completeness percentage for a transportador
 const calculateCompleteness = (t: Transportador): number => {
+  // Helper: Check if tramos arrays should be required based on perfil
+  const shouldCheckTramos = (field: string) => {
+    const perfil = t.geometria?.perfil;
+    if (field === 'tramosInclinados' || field === 'tramosHorizontal') {
+      return perfil === 'MIXTO' || perfil === 'INCLINADO';
+    }
+    return true;
+  };
+
+  // Helper: Check if field exists in the data structure (for changed structures like limpieza)
+  const fieldExists = (sectionData: any, field: string): boolean => {
+    if (!sectionData) return false;
+    // For raspadores array in limpieza section
+    if (field === 'raspadores' && sectionData.raspadores !== undefined) {
+      return true;
+    }
+    // For problemas object in limpieza section
+    if (field === 'problemas' && sectionData.problemas !== undefined) {
+      return true;
+    }
+    // For standard field check
+    return sectionData[field] !== undefined;
+  };
+
+  // Helper: Check if field is filled (handles arrays, objects, and scalar values)
+  const isFieldFilled = (sectionData: any, field: string): boolean => {
+    if (!sectionData) return false;
+
+    // Handle raspadores array in limpieza section
+    if (field === 'raspadores') {
+      return Array.isArray(sectionData.raspadores) && sectionData.raspadores.length > 0;
+    }
+
+    // Handle problemas object in limpieza section
+    if (field === 'problemas') {
+      return sectionData.problemas !== undefined && sectionData.problemas !== null;
+    }
+
+    // Handle standard fields
+    const value = sectionData[field];
+    if (value === undefined || value === null || value === '') {
+      return false;
+    }
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    return true;
+  };
+
   const sections = [
-    { key: 'identity', fields: ['cliente', 'faena', 'codigoTransportador', 'nombreDescriptivo', 'tipoEquipo', 'usuario'] },
-    { key: 'geometria', fields: ['longitudTotal_m', 'anchoBanda_mm', 'velocidadNominal_ms'] },
-    { key: 'material', fields: ['material', 'densidadAparante_tm3'] },
-    { key: 'capacidad', fields: ['capacidadNominal_th'] },
-    { key: 'correa', fields: ['tipo', 'resistenciaNominal_kNm'] },
+    { key: 'identity', fields: ['cliente', 'faena', 'codigoTransportador', 'nombreDescriptivo', 'tipoEquipo', 'usuario', 'area', 'fechaLevantamiento', 'fuenteDato', 'nivelConfianza'] },
+    { key: 'geometria', fields: ['longitudTotal_m', 'anchoBanda_mm', 'velocidadNominal_ms', 'elevacionTotal_m', 'inclinacionPromedio_grados', 'perfil', 'tramosInclinados', 'tramosHorizontal'] },
+    { key: 'material', fields: ['material', 'densidadAparante_tm3', 'tamanoMaxParticula_mm', 'tamanoMedio_mm', 'humedad', 'fluidez', 'abrasividad'] },
+    { key: 'capacidad', fields: ['capacidadNominal_th', 'capacidadMaxima_th', 'factorLlenado_pct', 'regimenOperacion'] },
+    { key: 'correa', fields: ['tipo', 'resistenciaNominal_kNm', 'numTelasCables', 'tipoCubiertaSuperior', 'tipoCubiertaInferior', 'espesorCubiertaSup_mm', 'espesorCubiertaInf_mm', 'tipoEmpalme'] },
     { key: 'polines', fields: ['polinesCarga', 'polinesRetorno'] },
     { key: 'zonaCarga', fields: ['numZonasCarga', 'zonas'] },
-    { key: 'limpieza', fields: ['limpiezaPrimaria', 'limpiezaSecundaria'] },
+    { key: 'limpieza', fields: ['raspadores', 'problemas'] },
     { key: 'tambores', fields: ['tambores'] },
-    { key: 'accionamiento', fields: ['potenciaInstalada_kW', 'numMotores'] },
+    { key: 'accionamiento', fields: ['potenciaInstalada_kW', 'numMotores', 'tipoArranque', 'reductor', 'backstop', 'freno'] },
     { key: 'takeUp', fields: ['takeUp'] },
-    { key: 'curvas', fields: ['curvasHorizontales', 'curvasVerticales'] },
+    { key: 'curvas', fields: ['curvasHorizontales', 'curvasVerticales', 'radioHorizontal_m', 'radioVertical_m'] },
   ];
 
   let totalFields = 0;
   let filledFields = 0;
+  const missingFields: { section: string; field: string }[] = [];
 
   sections.forEach(section => {
     const sectionData = (t as any)[section.key];
     section.fields.forEach(field => {
+      // Skip tramos arrays for HORIZONTAL profile
+      if (!shouldCheckTramos(field)) {
+        return;
+      }
+
       totalFields++;
-      if (sectionData && (sectionData[field] !== undefined && sectionData[field] !== null && sectionData[field] !== '' && sectionData[field] !== 0 && (!Array.isArray(sectionData[field]) || sectionData[field].length > 0))) {
+      const isFilled = isFieldFilled(sectionData, field);
+      if (isFilled) {
         filledFields++;
+      } else {
+        missingFields.push({ section: section.key, field });
       }
     });
   });
+
+  // Debug logging for missing fields
+  if (missingFields.length > 0) {
+    console.log(`[Completeness] Transportador ${t.identity.codigoTransportador || 'unknown'}: ${filledFields}/${totalFields} fields (${Math.round((filledFields / totalFields) * 100)}%)`);
+    console.log('[Completeness] Missing fields:', missingFields);
+  }
 
   return totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 0;
 };
@@ -75,6 +141,8 @@ const TransportadorList: React.FC<TransportadorListProps> = ({
   onViewTransportador,
   onDuplicateTransportador,
   onDeleteTransportador,
+  onUpdateEstado,
+  onExportPDF,
   loading = false,
 }) => {
   const [showFilters, setShowFilters] = useState(false);
@@ -434,6 +502,66 @@ const TransportadorList: React.FC<TransportadorListProps> = ({
                       </svg>
                       Duplicar
                     </button>
+                    {/* Estado Action Buttons */}
+                    {onUpdateEstado && (
+                      <>
+                        {transportador.estado === 'borrador' && (
+                          <button
+                            onClick={() => onUpdateEstado(transportador.id, 'completo')}
+                            className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-bold text-[10px] uppercase tracking-[0.1em] hover:bg-blue-100 transition-colors flex items-center gap-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Completar
+                          </button>
+                        )}
+                        {transportador.estado === 'completo' && (
+                          <button
+                            onClick={() => onUpdateEstado(transportador.id, 'validado')}
+                            className="px-4 py-2 bg-green-50 text-green-600 rounded-lg font-bold text-[10px] uppercase tracking-[0.1em] hover:bg-green-100 transition-colors flex items-center gap-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Validar
+                          </button>
+                        )}
+                        {transportador.estado === 'validado' && (
+                          <button
+                            onClick={() => onUpdateEstado(transportador.id, 'archivado')}
+                            className="px-4 py-2 bg-amber-50 text-amber-600 rounded-lg font-bold text-[10px] uppercase tracking-[0.1em] hover:bg-amber-100 transition-colors flex items-center gap-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg>
+                            Archivar
+                          </button>
+                        )}
+                        {transportador.estado === 'archivado' && (
+                          <button
+                            onClick={() => onUpdateEstado(transportador.id, 'borrador')}
+                            className="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg font-bold text-[10px] uppercase tracking-[0.1em] hover:bg-gray-100 transition-colors flex items-center gap-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                            Abrir
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {onExportPDF && (
+                      <button
+                        onClick={() => onExportPDF(transportador.id)}
+                        className="px-4 py-2 bg-gray-100 text-slate-600 rounded-lg font-bold text-[10px] uppercase tracking-[0.1em] hover:bg-gray-200 transition-colors flex items-center gap-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Exportar PDF
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeleteClick(transportador.id)}
                       className="px-4 py-2 bg-gray-100 text-[#f5365c] rounded-lg font-bold text-[10px] uppercase tracking-[0.1em] hover:bg-red-50 transition-colors flex items-center gap-1 ml-auto"

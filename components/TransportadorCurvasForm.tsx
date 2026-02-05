@@ -77,7 +77,7 @@ const TransportadorCurvasForm: React.FC<TransportadorCurvasFormProps> = ({
                 step="0.1"
                 min="0"
                 value={curvas.radioHorizontal_m}
-                onChange={(e) => handleChange('radioHorizontal_m', parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleChange('radioHorizontal_m', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                 className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
               />
             </div>
@@ -140,7 +140,7 @@ const TransportadorCurvasForm: React.FC<TransportadorCurvasFormProps> = ({
                 step="0.1"
                 min="0"
                 value={curvas.radioVertical_m}
-                onChange={(e) => handleChange('radioVertical_m', parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleChange('radioVertical_m', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                 className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#5e72e4] focus:border-transparent outline-none transition-all"
               />
             </div>

@@ -58,7 +58,7 @@ const TransportadorAccionamientoForm: React.FC<TransportadorAccionamientoFormPro
               step="1"
               min="0"
               value={accionamiento.potenciaInstalada_kW}
-              onChange={(e) => handleChange('potenciaInstalada_kW', parseFloat(e.target.value) || 0)}
+              onChange={(e) => handleChange('potenciaInstalada_kW', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
               className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
             />
           </div>

@@ -5,17 +5,18 @@ import { TransportadorZonaCarga, ZonaCarga, TipoCamaImpacto, TipoDescarga, Largo
 interface TransportadorZonaCargaFormProps {
   zonaCarga: TransportadorZonaCarga;
   onChange: (zonaCarga: TransportadorZonaCarga) => void;
+  materialTamanoMaxParticula_mm?: number;
 }
 
 const TIPO_CAMA_IMPACTO_OPCIONES = Object.values(TipoCamaImpacto);
 const TIPO_DESCARGA_OPCIONES = ['CENTRAL', 'DESVIADA', 'CASCADA'];
 const LARGO_ZONA_IMPACTO_UNIDADES = Object.values(LargoZonaImpactoUnidad);
 
-const createEmptyZonaCarga = (): ZonaCarga => ({
+const createEmptyZonaCarga = (tamanoLumpMax_mm?: number): ZonaCarga => ({
   alturaCaidaDiseno_m: 1.0,
   alturaCaidaReal_m: 1.0,
   tipoDescarga: 'CENTRAL' as TipoDescarga,
-  tamanoLumpMax_mm: 100,
+  tamanoLumpMax_mm: tamanoLumpMax_mm || 0,
   camaImpacto: false,
   largoZonaImpacto: 0,
   largoZonaImpactoUnidad: LargoZonaImpactoUnidad.MM,
@@ -28,6 +29,7 @@ const createEmptyZonaCarga = (): ZonaCarga => ({
 const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
   zonaCarga,
   onChange,
+  materialTamanoMaxParticula_mm,
 }) => {
   const handleChange = (field: keyof TransportadorZonaCarga, value: any) => {
     onChange({
@@ -38,7 +40,7 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
   };
 
   const agregarZona = () => {
-    const nuevas = [...(zonaCarga.zonas || []), createEmptyZonaCarga()];
+    const nuevas = [...(zonaCarga.zonas || []), createEmptyZonaCarga(materialTamanoMaxParticula_mm)];
     onChange({
       ...zonaCarga,
       zonas: nuevas,
@@ -134,7 +136,7 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
                       step="0.1"
                       min="0"
                       value={zona.alturaCaidaDiseno_m}
-                      onChange={(e) => actualizarZona(index, 'alturaCaidaDiseno_m', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => actualizarZona(index, 'alturaCaidaDiseno_m', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
                     />
                   </div>
@@ -149,7 +151,7 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
                       step="0.1"
                       min="0"
                       value={zona.alturaCaidaReal_m}
-                      onChange={(e) => actualizarZona(index, 'alturaCaidaReal_m', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => actualizarZona(index, 'alturaCaidaReal_m', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
                     />
                   </div>
@@ -180,7 +182,7 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
                       step="1"
                       min="0"
                       value={zona.tamanoLumpMax_mm}
-                      onChange={(e) => actualizarZona(index, 'tamanoLumpMax_mm', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => actualizarZona(index, 'tamanoLumpMax_mm', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
                     />
                   </div>
@@ -190,7 +192,7 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
                   {/* Cama de Impacto */}
                   <div className="space-y-1">
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">
-                      Cama de Impacto
+                      Sistema de Impacto
                     </label>
                     <div className="flex items-center gap-4 mt-1">
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -250,8 +252,8 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
                             type="number"
                             step="0.1"
                             min="0"
-                            value={zona.largoZonaImpacto || 0}
-                            onChange={(e) => actualizarZona(index, 'largoZonaImpacto', parseFloat(e.target.value) || 0)}
+                            value={zona.largoZonaImpacto !== undefined ? zona.largoZonaImpacto : ''}
+                            onChange={(e) => actualizarZona(index, 'largoZonaImpacto', e.target.value === '' ? undefined : parseFloat(e.target.value) ?? 0)}
                             className="flex-1 px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
                           />
                           <select
@@ -279,8 +281,8 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
                             type="number"
                             step="1"
                             min="0"
-                            value={zona.numPolinesImpacto || 0}
-                            onChange={(e) => actualizarZona(index, 'numPolinesImpacto', parseFloat(e.target.value) || 0)}
+                            value={zona.numPolinesImpacto !== undefined ? zona.numPolinesImpacto : ''}
+                            onChange={(e) => actualizarZona(index, 'numPolinesImpacto', e.target.value === '' ? undefined : parseFloat(e.target.value) ?? 0)}
                             className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
                           />
                         </div>
@@ -297,7 +299,7 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
                             step="1"
                             min="0"
                             value={zona.largoCamaDeslizante || 0}
-                            onChange={(e) => actualizarZona(index, 'largoCamaDeslizante', parseFloat(e.target.value) || 0)}
+                            onChange={(e) => actualizarZona(index, 'largoCamaDeslizante', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                             className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
                           />
                         </div>
@@ -314,7 +316,7 @@ const TransportadorZonaCargaForm: React.FC<TransportadorZonaCargaFormProps> = ({
                             step="1"
                             min="0"
                             value={zona.numEstaciones || 0}
-                            onChange={(e) => actualizarZona(index, 'numEstaciones', parseFloat(e.target.value) || 0)}
+                            onChange={(e) => actualizarZona(index, 'numEstaciones', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                             className="w-full px-3 py-2 text-xs font-semibold text-[#32325d] bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#825ee4] outline-none"
                           />
                         </div>

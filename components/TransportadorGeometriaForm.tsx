@@ -136,7 +136,10 @@ const TransportadorGeometriaForm: React.FC<TransportadorGeometriaFormProps> = ({
                 step="0.1"
                 min="0"
                 value={convertirLongitud(geometria.longitudTotal_m, longitudUnidad === 'm')}
-                onChange={(e) => handleChange('longitudTotal_m', convertirLongitud(parseFloat(e.target.value) || 0, longitudUnidad === 'm'))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleChange('longitudTotal_m', convertirLongitud(val === '' ? undefined : parseFloat(val) || 0, longitudUnidad === 'm'));
+                }}
                 className="flex-1 px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#11cdef] focus:border-transparent outline-none transition-all"
               />
               <select
@@ -160,7 +163,10 @@ const TransportadorGeometriaForm: React.FC<TransportadorGeometriaFormProps> = ({
                 type="number"
                 step="0.1"
                 value={geometria.elevacionTotal_m}
-                onChange={(e) => handleChange('elevacionTotal_m', parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleChange('elevacionTotal_m', val === '' ? undefined : parseFloat(val) || 0);
+                }}
                 className="flex-1 px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#11cdef] focus:border-transparent outline-none transition-all"
               />
               <span className="flex items-center px-3 py-3 bg-gray-100 text-xs font-semibold text-slate-500 rounded-lg">
@@ -183,7 +189,10 @@ const TransportadorGeometriaForm: React.FC<TransportadorGeometriaFormProps> = ({
                 min="-90"
                 max="90"
                 value={geometria.inclinacionPromedio_grados}
-                onChange={(e) => handleChange('inclinacionPromedio_grados', parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleChange('inclinacionPromedio_grados', val === '' ? undefined : parseFloat(val) || 0);
+                }}
                 className="flex-1 px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#11cdef] focus:border-transparent outline-none transition-all"
               />
               <span className="flex items-center px-3 py-3 bg-gray-100 text-xs font-semibold text-slate-500 rounded-lg">
@@ -203,7 +212,10 @@ const TransportadorGeometriaForm: React.FC<TransportadorGeometriaFormProps> = ({
                 step="1"
                 min="0"
                 value={convertirAncho(geometria.anchoBanda_mm, anchoUnidad === 'mm')}
-                onChange={(e) => handleChange('anchoBanda_mm', convertirAncho(parseFloat(e.target.value) || 0, anchoUnidad === 'mm'))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleChange('anchoBanda_mm', convertirAncho(val === '' ? undefined : parseFloat(val) || 0, anchoUnidad === 'mm'));
+                }}
                 className="flex-1 px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#11cdef] focus:border-transparent outline-none transition-all"
               />
               <select
@@ -228,7 +240,10 @@ const TransportadorGeometriaForm: React.FC<TransportadorGeometriaFormProps> = ({
                 step="0.01"
                 min="0"
                 value={convertirVelocidad(geometria.velocidadNominal_ms, velocidadUnidad === 'm/s')}
-                onChange={(e) => handleChange('velocidadNominal_ms', convertirVelocidad(parseFloat(e.target.value) || 0, velocidadUnidad === 'm/s'))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleChange('velocidadNominal_ms', convertirVelocidad(val === '' ? undefined : parseFloat(val) || 0, velocidadUnidad === 'm/s'));
+                }}
                 className="flex-1 px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#11cdef] focus:border-transparent outline-none transition-all"
               />
               <select

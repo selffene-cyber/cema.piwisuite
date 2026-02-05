@@ -89,7 +89,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
                 step="1"
                 min="0"
                 value={correa.resistenciaNominal_kNm}
-                onChange={(e) => handleChange('resistenciaNominal_kNm', parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleChange('resistenciaNominal_kNm', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                 className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
               />
             </div>
@@ -104,7 +104,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
                 step="1"
                 min="0"
                 value={correa.numTelasCables}
-                onChange={(e) => handleChange('numTelasCables', parseInt(e.target.value) || 0)}
+                onChange={(e) => handleChange('numTelasCables', e.target.value === '' ? undefined : parseInt(e.target.value) || 0)}
                 className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
               />
             </div>
@@ -125,7 +125,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
                   step="1"
                   min="0"
                   value={correa.resistenciaST_kN_m || ''}
-                  onChange={(e) => handleChange('resistenciaST_kN_m', parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleChange('resistenciaST_kN_m', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                   className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
                 />
               </div>
@@ -140,7 +140,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
                   step="1"
                   min="0"
                   value={correa.numTelasCables}
-                  onChange={(e) => handleChange('numTelasCables', parseInt(e.target.value) || 0)}
+                  onChange={(e) => handleChange('numTelasCables', e.target.value === '' ? undefined : parseInt(e.target.value) || 0)}
                   className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
                 />
               </div>
@@ -157,7 +157,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
                   step="0.1"
                   min="0"
                   value={correa.pasoCable_mm || ''}
-                  onChange={(e) => handleChange('pasoCable_mm', parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleChange('pasoCable_mm', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                   className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
                 />
               </div>
@@ -172,7 +172,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
                   step="0.1"
                   min="0"
                   value={correa.diametroCable_mm || ''}
-                  onChange={(e) => handleChange('diametroCable_mm', parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleChange('diametroCable_mm', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
                   className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
                 />
               </div>
@@ -192,7 +192,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
               step="0.5"
               min="0"
               value={correa.espesorCubiertaSup_mm}
-              onChange={(e) => handleChange('espesorCubiertaSup_mm', parseFloat(e.target.value) || 0)}
+              onChange={(e) => handleChange('espesorCubiertaSup_mm', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
               className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
             />
           </div>
@@ -207,7 +207,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
               step="0.5"
               min="0"
               value={correa.espesorCubiertaInf_mm}
-              onChange={(e) => handleChange('espesorCubiertaInf_mm', parseFloat(e.target.value) || 0)}
+              onChange={(e) => handleChange('espesorCubiertaInf_mm', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
               className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#fb6340] focus:border-transparent outline-none transition-all"
             />
           </div>
@@ -283,7 +283,7 @@ const TransportadorCorreaForm: React.FC<TransportadorCorreaFormProps> = ({
               step="1"
               min="0"
               value={correa.longitudEmpalme_mm}
-              onChange={(e) => handleChange('longitudEmpalme_mm', parseFloat(e.target.value) || 0)}
+              onChange={(e) => handleChange('longitudEmpalme_mm', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
               className="w-full px-4 py-3 text-xs font-semibold text-[#32325d] bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#f5365c] focus:border-transparent outline-none transition-all"
             />
           </div>
