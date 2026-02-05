@@ -220,6 +220,14 @@ const Home: React.FC<HomeProps> = ({ evaluations, setActiveModule, currentUser }
       {/* Quick Access Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <button 
+          onClick={() => setActiveModule('transportadores')}
+          className="soft-card p-8 text-left group hover:bg-slate-50 transition-all border-l-[6px] border-l-[#0090A8] active:scale-[0.99]"
+        >
+          <span className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Módulo Maestro</span>
+          <h3 className="text-sm font-extrabold text-[#32325d] tracking-widest uppercase group-hover:text-[#0090A8] transition-colors">TRANSPORTADORES</h3>
+        </button>
+
+        <button 
           onClick={() => setActiveModule('cema576')}
           className={`soft-card p-8 text-left group hover:bg-slate-50 transition-all border-l-[6px] border-l-[#2dce89] active:scale-[0.99] ${isAuditor ? 'opacity-60 cursor-not-allowed' : ''}`}
           disabled={isAuditor}
@@ -242,14 +250,6 @@ const Home: React.FC<HomeProps> = ({ evaluations, setActiveModule, currentUser }
         >
           <span className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Herramientas</span>
           <h3 className="text-sm font-extrabold text-[#32325d] tracking-widest uppercase group-hover:text-[#11cdef] transition-colors">CALCULADORA TÉCNICA</h3>
-        </button>
-
-        <button 
-          onClick={() => setActiveModule('transportadores')}
-          className="soft-card p-8 text-left group hover:bg-slate-50 transition-all border-l-[6px] border-l-[#0090A8] active:scale-[0.99]"
-        >
-          <span className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Módulo Técnico</span>
-          <h3 className="text-sm font-extrabold text-[#32325d] tracking-widest uppercase group-hover:text-[#0090A8] transition-colors">TRANSPORTADORES</h3>
         </button>
       </div>
 
